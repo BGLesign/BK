@@ -101,7 +101,9 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     var flow = ['s1', 's2', 's3'], at = id === 'sp' ? 1 : flow.indexOf(id), adminScr = ['so', 'sr'].indexOf(id) > -1;
     document.body.setAttribute('data-s', id);
     $('hero').classList.toggle('hidden', id !== 's1' && id !== 'sl');
-    $('heroText').textContent = id === 'sl' ? '사번과 개인 코드로 로그인하세요.' : '서명지를 고르고 현장에서 안내받은 접속 코드를 입력하세요.';
+    $('heroText').classList.toggle('hidden', id !== 'sl');       // 로그인 안내만 (목록 화면은 단계 표시·탭이 안내)
+    $('meBar').classList.toggle('hidden', id !== 's1');          // 이름·직위·관리자·로그아웃: 목록 화면 배너 안
+    if (id !== 's1' && id !== 'sl') { try { sessionStorage.setItem('bglSwHint', '1'); } catch (x) {} }   // 다른 화면으로 가면 이번 로그인의 카드 밀기 힌트는 끝
     $('steps').classList.toggle('hidden', at < 0 || (!!rfEdu && id === 's3'));   // 환불 등록은 단계 표시 없음
     $('foot').classList.toggle('hidden', adminScr);
     if (id === 's3') {
@@ -365,9 +367,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     var list = isOpen ? opens : closes;
     if (!list.length) { box.innerHTML = '<div class="hint" style="margin-top:8px">' + (isOpen ? '현재 진행 중인 서명지가 없습니다.' : '마감된 서명지가 없습니다.') + '</div>'; }
     var adm = !!(staff && staff.admin && !staff.guest);
-    if (adm && list.length) { var hn = document.createElement('div'); hn.className = 'eswHint'; hn.textContent = '카드를 옆으로 밀어 보세요'; box.appendChild(hn); }
     var pdfSw = function (e) { return !!(e.pdfSign && (e.open === false || e.pdfSign.canDel)); };   // PDF 서명지: 완료되면 [PDF 받기], 올린 사람·관리자는 [삭제]
-    if (!adm && list.some(pdfSw)) { var hp = document.createElement('div'); hp.className = 'eswHint'; hp.textContent = 'PDF 서명지 카드를 옆으로 밀어 보세요'; box.appendChild(hp); }
     var put = function (e, el) { box.appendChild(adm && !e.pdfSign || pdfSw(e) ? eswWrap(e, el) : el); };
     list.forEach(function (e) {
       if (e.refund) { put(e, rfItem(e)); return; }
@@ -390,17 +390,21 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     });
     eswNudge();
   }
-  // 카드 밀기 첫 사용 힌트: 이 휴대폰에서 처음 한 번, 밀 수 있는 첫 카드가 왼쪽으로 살짝 밀렸다 돌아옴 (목록이 화면에 보일 때만)
+  // 카드 밀기 힌트: 로그인 후 첫 목록 화면에서 한 번 (다른 화면에 갔다 와도 다시 안 나옴, 다시 로그인하면 한 번 더).
+  // 밀 수 있는 카드가 왼쪽으로 살짝 밀렸다 돌아오고, 오른쪽으로 밀 수 있는 카드(환불)는 이어서 오른쪽으로도 한 번 (목록이 화면에 보일 때만)
   var nudgeT = null;
   function eswNudge() {
-    try { if (localStorage.getItem('bglSwHint')) return; } catch (x) { return; }
+    try { if (sessionStorage.getItem('bglSwHint')) return; } catch (x) { return; }
     clearTimeout(nudgeT);
     nudgeT = setTimeout(function () {
-      var w = document.querySelector('#edus .esw');
+      var ws = [].slice.call(document.querySelectorAll('#edus .esw')), w = ws.filter(function (x) { return !!x.querySelector('.eswActL'); })[0] || ws[0];
       if (!w || !w.offsetParent || document.querySelector('#edus .esw.open, #edus .esw.openR')) return;
-      try { localStorage.setItem('bglSwHint', '1'); } catch (x) {}
+      try { sessionStorage.setItem('bglSwHint', '1'); } catch (x) {}
       w.classList.add('nudge');
-      setTimeout(function () { w.classList.remove('nudge'); }, 1000);
+      setTimeout(function () {
+        w.classList.remove('nudge');
+        if (w.querySelector('.eswActL')) { w.classList.add('nudgeR'); setTimeout(function () { w.classList.remove('nudgeR'); }, 1000); }
+      }, 1000);
     }, 600);
   }
   /* ---------- 관리자: 카드 밀기 → 마감 / 다시 열기·삭제 (마감·삭제는 두 번 눌러 실행), 정보 수정·내보내기 ---------- */
@@ -936,7 +940,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       if (r.needCode) { msg($('lgMsg'), '코드를 입력해 주세요', '#c0392b'); $('lgCode').focus(); return; }
       if (!r.guest) { try { localStorage.setItem('bglPin', pin); } catch (x) {} }   // 함께 쓰는 아이디는 기억하지 않음
       if (r.dev) { try { localStorage.setItem('bglDev', r.dev); } catch (x) {} }    // 기기 열쇠: 이 휴대폰으로 로그인한 적 있음 (업무차량 QR 운행 시작에 필요, 로그아웃해도 남김)
-      $('lgCode').value = '';
+      $('lgCode').value = ''; try { sessionStorage.removeItem('bglSwHint'); } catch (x) {}   // 로그인할 때마다 카드 밀기 힌트 한 번
       var ttl = Number(r.ttl) || 1200;                    // 마지막 동작 후 이 시간(초)이면 자동 로그아웃 (서버와 같게)
       lastAct = lastPing = lastSave = Date.now(); try { sessionStorage.setItem(ACT_KEY, String(lastAct)); } catch (x) {}
       if (r.guest) { $('lgPin').value = ''; setStaff({ token: r.token, guest: true, ttl: ttl }); }
@@ -951,7 +955,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   $('lgPin').value = savedPin();
   $('lgPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('lgCode').focus(); } });
   $('lgCode').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); lgSubmit(); } });
-  $('meOut').onclick = function () { logout(); };
+  $('meOut').onclick = function () { if (confirm('로그아웃하시겠습니까?')) logout(); };
 
   /* ---------- 직원 등록: 미등록 안내 → 사내 메일 → 인증 코드 → 입력 → 다시 확인 → 직원DB에 기록 ---------- */
   var REG_UI = { regAsk: [0, '직원 등록', '등록되지 않은 사번입니다'], regMailStep: [1, '사내 메일 인증', '본인 메일로 인증 코드를 보내 드립니다'], regCodeStep: [2, '인증 코드 입력', '메일로 받은 숫자 6자리를 입력하세요'],

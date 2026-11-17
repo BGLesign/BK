@@ -101,7 +101,9 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     var flow = ['s1', 's2', 's3'], at = id === 'sp' ? 1 : flow.indexOf(id), adminScr = ['so', 'sr'].indexOf(id) > -1;
     document.body.setAttribute('data-s', id);
     $('hero').classList.toggle('hidden', id !== 's1' && id !== 'sl');
-    $('heroText').textContent = id === 'sl' ? '사번과 개인 코드로 로그인하세요.' : '서명지를 고르고 현장에서 안내받은 접속 코드를 입력하세요.';
+    $('heroText').classList.toggle('hidden', id !== 'sl');       // 로그인 안내만 (목록 화면은 단계 표시·탭이 안내)
+    $('meBar').classList.toggle('hidden', id !== 's1');          // 이름·직위·관리자·로그아웃: 목록 화면 배너 안
+    if (id !== 's1' && id !== 'sl') { try { sessionStorage.setItem('bglSwHint', '1'); } catch (x) {} }   // 다른 화면으로 가면 이번 로그인의 카드 밀기 힌트는 끝
     $('steps').classList.toggle('hidden', at < 0 || (!!rfEdu && id === 's3'));   // 환불 등록은 단계 표시 없음
     $('foot').classList.toggle('hidden', adminScr);
     if (id === 's3') {

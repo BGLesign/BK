@@ -152,9 +152,7 @@
     var list = isOpen ? opens : closes;
     if (!list.length) { box.innerHTML = '<div class="hint" style="margin-top:8px">' + (isOpen ? '현재 진행 중인 서명지가 없습니다.' : '마감된 서명지가 없습니다.') + '</div>'; }
     var adm = !!(staff && staff.admin && !staff.guest);
-    if (adm && list.length) { var hn = document.createElement('div'); hn.className = 'eswHint'; hn.textContent = '카드를 옆으로 밀어 보세요'; box.appendChild(hn); }
     var pdfSw = function (e) { return !!(e.pdfSign && (e.open === false || e.pdfSign.canDel)); };   // PDF 서명지: 완료되면 [PDF 받기], 올린 사람·관리자는 [삭제]
-    if (!adm && list.some(pdfSw)) { var hp = document.createElement('div'); hp.className = 'eswHint'; hp.textContent = 'PDF 서명지 카드를 옆으로 밀어 보세요'; box.appendChild(hp); }
     var put = function (e, el) { box.appendChild(adm && !e.pdfSign || pdfSw(e) ? eswWrap(e, el) : el); };
     list.forEach(function (e) {
       if (e.refund) { put(e, rfItem(e)); return; }
@@ -177,17 +175,21 @@
     });
     eswNudge();
   }
-  // 카드 밀기 첫 사용 힌트: 이 휴대폰에서 처음 한 번, 밀 수 있는 첫 카드가 왼쪽으로 살짝 밀렸다 돌아옴 (목록이 화면에 보일 때만)
+  // 카드 밀기 힌트: 로그인 후 첫 목록 화면에서 한 번 (다른 화면에 갔다 와도 다시 안 나옴, 다시 로그인하면 한 번 더).
+  // 밀 수 있는 카드가 왼쪽으로 살짝 밀렸다 돌아오고, 오른쪽으로 밀 수 있는 카드(환불)는 이어서 오른쪽으로도 한 번 (목록이 화면에 보일 때만)
   var nudgeT = null;
   function eswNudge() {
-    try { if (localStorage.getItem('bglSwHint')) return; } catch (x) { return; }
+    try { if (sessionStorage.getItem('bglSwHint')) return; } catch (x) { return; }
     clearTimeout(nudgeT);
     nudgeT = setTimeout(function () {
-      var w = document.querySelector('#edus .esw');
+      var ws = [].slice.call(document.querySelectorAll('#edus .esw')), w = ws.filter(function (x) { return !!x.querySelector('.eswActL'); })[0] || ws[0];
       if (!w || !w.offsetParent || document.querySelector('#edus .esw.open, #edus .esw.openR')) return;
-      try { localStorage.setItem('bglSwHint', '1'); } catch (x) {}
+      try { sessionStorage.setItem('bglSwHint', '1'); } catch (x) {}
       w.classList.add('nudge');
-      setTimeout(function () { w.classList.remove('nudge'); }, 1000);
+      setTimeout(function () {
+        w.classList.remove('nudge');
+        if (w.querySelector('.eswActL')) { w.classList.add('nudgeR'); setTimeout(function () { w.classList.remove('nudgeR'); }, 1000); }
+      }, 1000);
     }, 600);
   }
   /* ---------- 관리자: 카드 밀기 → 마감 / 다시 열기·삭제 (마감·삭제는 두 번 눌러 실행), 정보 수정·내보내기 ---------- */

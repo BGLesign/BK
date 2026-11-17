@@ -17,9 +17,10 @@
     <div class="k">BUSAN · GIMHAE LRT</div>
     <h2>BGL e-싸인</h2>
     <p id="heroText">사번과 개인 코드로 로그인하세요.</p>
+    <div class="meChip hidden" id="meBar"><b id="meName"></b><button class="meOut" id="meOut" type="button">로그아웃</button></div>
   </div>
   <button class="qrBtn hidden" id="qrBtn" type="button" aria-label="QR 크게 보기"><span id="qrSmall"></span><b>QR</b></button>
-  <svg viewBox="0 0 400 120" aria-hidden="true">
+  <svg viewBox="0 0 400 120" preserveAspectRatio="xMidYMax slice" aria-hidden="true">
     <!-- 먼 산 -->
     <path d="M0 88 L40 62 L70 76 L110 44 L150 70 L190 52 L230 74 L270 40 L310 66 L350 50 L400 72 L400 120 L0 120Z" fill="#fff" opacity=".08"/>
     <!-- 도시 -->
@@ -95,11 +96,7 @@
   <!-- 1단계: 서명지 선택 + 접속 코드 -->
   <section id="s1" class="hidden">
     <div class="card">
-      <div class="meBar"><b id="meName"></b><button class="btn gray sbtn" id="meOut" type="button">로그아웃</button></div>
-    </div>
-    <div class="card">
-      <b>서명지를 선택하세요</b>
-      <div class="eTabs"><button type="button" id="edTabOpen"></button><button type="button" id="edTabClosed"></button></div>
+      <div class="eTabs" style="margin-top:0"><button type="button" id="edTabOpen"></button><button type="button" id="edTabClosed"></button></div>
       <div class="list" id="edus"><div class="hint">불러오는 중…</div></div>
       <div class="msg" id="msg1"></div>
     </div>

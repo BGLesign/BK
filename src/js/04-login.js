@@ -148,7 +148,7 @@
       if (r.needCode) { msg($('lgMsg'), '코드를 입력해 주세요', '#c0392b'); $('lgCode').focus(); return; }
       if (!r.guest) { try { localStorage.setItem('bglPin', pin); } catch (x) {} }   // 함께 쓰는 아이디는 기억하지 않음
       if (r.dev) { try { localStorage.setItem('bglDev', r.dev); } catch (x) {} }    // 기기 열쇠: 이 휴대폰으로 로그인한 적 있음 (업무차량 QR 운행 시작에 필요, 로그아웃해도 남김)
-      $('lgCode').value = '';
+      $('lgCode').value = ''; try { sessionStorage.removeItem('bglSwHint'); } catch (x) {}   // 로그인할 때마다 카드 밀기 힌트 한 번
       var ttl = Number(r.ttl) || 1200;                    // 마지막 동작 후 이 시간(초)이면 자동 로그아웃 (서버와 같게)
       lastAct = lastPing = lastSave = Date.now(); try { sessionStorage.setItem(ACT_KEY, String(lastAct)); } catch (x) {}
       if (r.guest) { $('lgPin').value = ''; setStaff({ token: r.token, guest: true, ttl: ttl }); }
@@ -163,7 +163,7 @@
   $('lgPin').value = savedPin();
   $('lgPin').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); $('lgCode').focus(); } });
   $('lgCode').addEventListener('keydown', function (e) { if (e.key === 'Enter') { e.preventDefault(); lgSubmit(); } });
-  $('meOut').onclick = function () { logout(); };
+  $('meOut').onclick = function () { if (confirm('로그아웃하시겠습니까?')) logout(); };
 
   /* ---------- 직원 등록: 미등록 안내 → 사내 메일 → 인증 코드 → 입력 → 다시 확인 → 직원DB에 기록 ---------- */
   var REG_UI = { regAsk: [0, '직원 등록', '등록되지 않은 사번입니다'], regMailStep: [1, '사내 메일 인증', '본인 메일로 인증 코드를 보내 드립니다'], regCodeStep: [2, '인증 코드 입력', '메일로 받은 숫자 6자리를 입력하세요'],

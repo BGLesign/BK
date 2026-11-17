@@ -97,8 +97,15 @@
   .esw.nudge > .eswAct:not(.eswActL) { visibility:visible; }   /* 첫 사용 힌트: 살짝 밀렸다 돌아옴 */
   .esw.nudge > .eswFront { animation:eswNudge .9s ease-in-out; }
   @keyframes eswNudge { 0%, 100% { transform:translateX(0); } 40%, 60% { transform:translateX(-56px); } }
-  @media (prefers-reduced-motion: reduce) { .esw.nudge > .eswFront { animation:none; } }
-  .eswHint { font-size:13px; color:var(--sub); margin-top:6px; }
+  .esw.nudgeR > .eswActL { visibility:visible; }   /* 오른쪽으로도 한 번 (환불 카드: [5분 연장]) */
+  .esw.nudgeR > .eswFront { animation:eswNudgeR .9s ease-in-out; }
+  @keyframes eswNudgeR { 0%, 100% { transform:translateX(0); } 40%, 60% { transform:translateX(56px); } }
+  @media (prefers-reduced-motion: reduce) { .esw.nudge > .eswFront, .esw.nudgeR > .eswFront { animation:none; } }
+  /* 목록 화면 배너: 이름·관리자·로그아웃, 열차는 낮게 */
+  .meChip { position:relative; z-index:1; display:flex; flex-wrap:wrap; align-items:center; gap:4px 8px; margin-top:8px; font-size:14px; }
+  .meChip b { font-weight:700; } .meChip .meAdm { margin-left:0; background:rgba(255,255,255,.25); } .meChip .meAdm.mst { background:#6d28d9; }
+  .meOut { border:0; background:none; color:#fff; opacity:.8; font-family:inherit; font-size:13px; text-decoration:underline; text-underline-offset:3px; padding:6px 4px; cursor:pointer; }
+  body[data-s="s1"] .hero > svg { height:auto; aspect-ratio:400 / 78; }
   .person { display:flex; align-items:center; justify-content:space-between; padding:14px; border:1px solid var(--line);
             border-radius:12px; background:#fff; font-size:17px; width:100%; text-align:left; }
   .person .rank { color:var(--sub); font-size:14px; margin-right:8px; }
