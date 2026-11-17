@@ -31,15 +31,16 @@
     if (on && isAdm() && !admData) admEnsure(function () {}, $('nMsg'));   // 관리자: 양식 목록은 펼칠 때 받음
   };
 
-  /* 명단 지정: 동명이인을 부서·직위·이름·사번으로 보여 주고 고르기 (둘 다 가능) */
+  /* 명단 지정: 동명이인을 부서·직책·직급·이름·사번으로 보여 주고 고르기
+     (역할 칸 양식은 줄마다 한 명 g.one, 그 밖에는 이름마다 여러 명 가능) */
   function drawRosterPick(list) {
     var box = $('nPick'); box.innerHTML = ''; box.classList.remove('hidden');
     list.forEach(function (g) {
-      var t = document.createElement('b'); t.textContent = g.name + ' ' + g.people.length + '명'; box.appendChild(t);
+      var t = document.createElement('b'); t.textContent = g.one ? g.name : g.name + ' ' + g.people.length + '명'; box.appendChild(t);
       g.people.forEach(function (p) {
         var l = document.createElement('label'), c = document.createElement('input'), s = document.createElement('span');
-        c.type = 'checkbox'; c.setAttribute('data-g', g.key); c.value = p.pin;
-        s.textContent = [p.dept, p.rank, p.name, p.pin].filter(Boolean).join(' · ');
+        c.type = g.one ? 'radio' : 'checkbox'; c.name = 'pk_' + g.key; c.setAttribute('data-g', g.key); c.value = p.pin;
+        s.textContent = [p.dept, p.post, p.rank, p.name, p.pin].filter(Boolean).join(' · ');
         l.appendChild(c); l.appendChild(s); box.appendChild(l);
       });
     });
@@ -52,12 +53,20 @@
     Object.keys(out).forEach(function (k) { if (!out[k].length) ok = false; });
     return ok ? out : false;
   }
+  /** 두 줄에서 같은 사람(사번)을 고른 경우 그 이름 */
+  function pickTwice() {
+    var seen = {}, hit = '';
+    [].forEach.call($('nPick').querySelectorAll('input[type=radio]:checked'), function (c) {
+      if (seen[c.value] && !hit) hit = c.nextSibling.textContent; seen[c.value] = 1;
+    });
+    return hit;
+  }
   $('nRoster').addEventListener('input', function () { $('nPick').classList.add('hidden'); $('nPick').innerHTML = ''; });
 
   $('nCreate').onclick = function () {
     if ($('nTpl').value === PDF_TPL) { puOpen(); return; }   // PDF 서명지: PDF 올리는 화면
     if (!admData) { admEnsure(function () { nTplUi(); }, $('nMsg')); return; }
-    var rfNew = isRfTpl($('nTpl').value), dept = rfNew || $('nDeptRow').classList.contains('hidden') ? '' : $('nDept').value;   // 숨겨진 칸의 기본값은 보내지 않음
+    var rfNew = isRfTpl($('nTpl').value), dept = rfNew || $('nDeptRow').classList.contains('hidden') ? [] : mselVal($('nDept'));   // 숨겨진 칸의 기본값은 보내지 않음
     var skNew = isSkTpl($('nTpl').value);
     var need = [['nTitle', '교육명'], ['nDate', '날짜'], ['nCode', '접속 코드']].filter(function (f) {
       if (skNew) return f[0] === 'nDate' && !$(f[0]).value.trim();   // 안전점검: 날짜만 (제목은 비우면 기본 제목)
@@ -81,17 +90,18 @@
     }
     var qrMin = rfNew ? rfMinVal() : '';
     if (rfNew && !(qrMin >= 1 && qrMin <= 600)) { msg($('nMsg'), 'QR 접수 시간은 1~600분으로 정해 주세요.', '#c0392b'); $('nRfMin').focus(); return; }
-    var rosterNew = !rfNew && $('nVerify').checked && $('nUseRoster').checked;
+    var rosterNew = !rfNew && !$('nGuest').checked && $('nUseRoster').checked;
     if (rosterNew && !$('nRoster').value.trim()) { msg($('nMsg'), '명단에 이름을 입력하세요.', '#c0392b'); $('nRoster').focus(); return; }
     var pick = rosterPick();
-    if (pick === false) { msg($('nMsg'), '동명이인을 한 명 이상 고르세요.', '#c0392b'); return; }
+    if (pick === false) { msg($('nMsg'), '동명이인을 골라 주세요.', '#c0392b'); return; }
+    if (pick && pickTwice()) { msg($('nMsg'), '같은 사람을 두 줄에서 골랐습니다: ' + pickTwice(), '#c0392b'); return; }
     $('nCreate').disabled = true;
-    var guestNew = !rfNew && !$('nVerify').checked;   // 본인 확인을 끄면 서명자가 칸을 직접 입력
-    admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: rfNew ? '' : $('nTitle').value, dept: dept, team: dept ? $('nTeam').value : '', date: rfNew ? '' : $('nDate').value, code: rfNew ? '' : $('nCode').value, qrMin: qrMin, guest: guestNew, useRoster: rosterNew, roster: rosterNew ? $('nRoster').value : '', rosterPick: rosterNew ? pick : null }], function (d) {
+    var guestNew = !rfNew && $('nGuest').checked;   // 외부인 서명지: 서명자가 칸을 직접 입력
+    admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: rfNew ? '' : $('nTitle').value, dept: dept, team: dept.length === 1 && !$('nTeamRow').classList.contains('hidden') ? mselVal($('nTeam')) : [], date: rfNew ? '' : $('nDate').value, code: rfNew ? '' : $('nCode').value, qrMin: qrMin, guest: guestNew, useRoster: rosterNew, roster: rosterNew ? $('nRoster').value : '', rosterPick: rosterNew ? pick : null }], function (d) {
       $('nCreate').disabled = false;
       if (d.rosterChoice) { drawRosterPick(d.rosterChoice); msg($('nMsg'), '같은 이름의 직원이 있습니다. 서명할 사람을 고른 뒤 다시 누르세요.', '#324eb3'); return; }
       $('nPick').classList.add('hidden'); $('nPick').innerHTML = '';
-      if (!rfNew) { $('nTitle').value = ''; $('nCode').value = ''; $('nRoster').value = ''; $('nUseRoster').checked = false; $('nDept').innerHTML = ''; }
+      if (!rfNew) { $('nTitle').value = ''; $('nCode').value = ''; $('nRoster').value = ''; $('nUseRoster').checked = false; $('nGuest').checked = false; $('nDept')._v = null; }
       $('newCard').classList.remove('open');   // 교육을 연 뒤에는 접음
       edTab = 'open'; renderAdmin(d);
     }, $('nMsg'), function () { $('nCreate').disabled = false; });   // 실패하면 바로 다시 누를 수 있게
@@ -120,8 +130,8 @@
       '<div class="ibox"><div class="ihead"><b>서명지 정보 수정</b></div>' +
       '<div class="ibody">' +
       '<div class="field"><label>교육명</label><input type="text" class="i-title" autocomplete="off"></div>' +
-      '<div class="fRow"><div class="field i-deptRow"><label>부서명</label><select class="i-dept"></select></div>' +
-      '<div class="field i-teamRow"><label>팀</label><select class="i-team"></select></div></div>' +
+      '<div class="field i-deptRow"><label>부서명 <span class="hint">(여러 개 고르기)</span></label><div class="msel i-dept"></div></div>' +
+      '<div class="field i-teamRow"><label>팀 <span class="hint">(여러 개 고르기)</span></label><div class="msel i-team"></div></div>' +
       '<div class="field i-dateRow"><label>날짜</label><input type="text" class="i-date" autocomplete="off"></div>' +
       '<div class="row"><button class="btn gray b-info">변경 사항 저장</button></div>' +
       '<div class="codeSec"><div style="margin-top:12px"><b>접속 코드</b></div>' +
@@ -149,7 +159,7 @@
     chip.className = 'chip ' + (e.open ? 'on' : 'off'); chip.textContent = e.open ? '접수 중' : '마감';
     if (e.refund) chip.style.marginLeft = '0';
     q('.t').appendChild(chip);
-    if (e.guest) { var gchip = document.createElement('span'); gchip.className = 'chip ext'; gchip.textContent = '본인 확인 없음'; q('.t').appendChild(gchip); }
+    if (e.guest) { var gchip = document.createElement('span'); gchip.className = 'chip ext'; gchip.textContent = '외부인 서명지'; q('.t').appendChild(gchip); }
     if (e.roster) { var ochip = document.createElement('span'); ochip.className = 'chip ext'; ochip.textContent = '명단 지정'; q('.t').appendChild(ochip);
       if (mode !== 'exp') q('.rosterSec').classList.remove('hidden'); q('.rosterLeft').textContent = (e.rosterLeft || []).join(', ') || '없음 (전원 서명)'; }
     if (e.codeLocked) { var lchip = document.createElement('span'); lchip.className = 'chip off'; lchip.textContent = '코드 잠김'; q('.t').appendChild(lchip); }
@@ -174,11 +184,11 @@
     // 접수 마감·다시 열기·삭제는 카드 밀기 버튼으로
     // 교육 정보 (기본은 접힘, 눌러서 펼치기)
     q('.i-title').value = e.title || ''; q('.i-date').value = e.date || '';
-    deptTeamSel(q('.i-dept'), q('.i-team'), e.dept || '', e.team || '');
+    deptTeamSel(q('.i-dept'), q('.i-team'), q('.i-teamRow'), e.dept || '', e.team || '');
     deptRow(q('.i-deptRow'), e.tpl, e.guest); q('.i-teamRow').classList.toggle('hidden', !!e.guest || !!e.refund);
     q('.b-info').onclick = function () {
       q('.b-info').disabled = true;
-      admCall('adminEditEdu', [e.id, { title: q('.i-title').value, dept: q('.i-dept').value, team: q('.i-dept').value ? q('.i-team').value : '', date: q('.i-date').value }], function (d) {
+      admCall('adminEditEdu', [e.id, { title: q('.i-title').value, dept: mselVal(q('.i-dept')), team: mselVal(q('.i-dept')).length === 1 ? mselVal(q('.i-team')) : [], date: q('.i-date').value }], function (d) {
         renderAdmin(d);
       }, q('.m'));
       setTimeout(function () { q('.b-info').disabled = false; }, 15000);

@@ -6,7 +6,7 @@
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>e-싸인</title>
-<link rel="stylesheet" href="assets/sign.css?v=7373992680">
+<link rel="stylesheet" href="assets/sign.css?v=016a06ba4f">
 </head>
 <body>
 <header>
@@ -115,21 +115,21 @@
     <div class="card hidden" id="newCard">
       <div class="nhead" id="nHead"><b>새 서명지 열기</b></div>
       <div class="nbody">
-      <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nVerify" checked> <b>본인 확인</b></label>
+      <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nGuest"> <b>외부인 서명지</b></label>
         <label class="vchk" id="nRosterRow"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b></label></div>
-        <div class="note hidden" id="nNoVerify">본인 확인 없음: 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+        <div class="note hidden" id="nNoVerify">외부인 서명지: 직원 로그인 없이 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field"><label>양식</label><select id="nTpl"></select><div class="tprev hidden" id="nTplPrev"></div></div>
       <div class="field hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 서명지를 열 때 고릅니다"></textarea>
         <div class="pickBox hidden" id="nPick"></div>
-        <div class="note">명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
+        <div class="note" id="nRosterNote">명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field hidden" id="nSkBox"><label>점검할 역</label>
         <label class="vchk" style="margin-top:6px"><input type="checkbox" id="nSkAll" checked> <b>전체 선택</b></label>
         <div class="skChecks" id="nSkList"></div>
         <div class="note">안전점검: 제목은 "안전점검의 날 체크리스트"로 고정, 부서명은 서명지를 연 관리자의 부서(그 부서 직원에게만 보임), 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
-      <div class="fRow"><div class="field" id="nDeptRow"><label>부서명</label><select id="nDept"></select></div>
-      <div class="field" id="nTeamRow"><label>팀</label><select id="nTeam"></select></div></div>
-      <div class="note" id="nDeptNote">부서명·팀을 고르면 해당하는 사람에게만 서명지가 보입니다. 명단도 지정하면 명단에 있는 사람까지 보입니다. 모두 [전체]이고 명단이 없으면 모든 직원에게 보입니다.</div>
+      <div class="field" id="nDeptRow"><label>부서명 <span class="hint">(여러 개 고르기)</span></label><div class="msel" id="nDept"></div></div>
+      <div class="field" id="nTeamRow"><label>팀 <span class="hint">(여러 개 고르기)</span></label><div class="msel" id="nTeam"></div></div>
+      <div class="note" id="nDeptNote">고른 부서(팀)의 직원과 명단에 넣은 사람에게 서명지가 보입니다. 부서가 [전체]면 모든 직원에게 보입니다. 팀은 부서를 하나만 골랐을 때 고를 수 있습니다.</div>
       <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
       <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
       <div class="field hidden" id="nRfMinRow"><label>고객용 QR 접수 시간</label>
@@ -165,7 +165,7 @@
     <div class="card hidden" id="gstCard">
       <div class="nhead" id="gstHead"><b>배포용 아이디</b></div>
       <div class="ebody">
-        <div class="note">외부 참석자가 함께 쓰는 아이디입니다. 사번 칸에 이 아이디만 넣으면 로그인되고(개인 코드 없음), 본인 확인 없는 서명지만 보입니다. 아이디를 바꾸면 기존 로그인은 끊깁니다. 비우고 저장하면 사용하지 않습니다.</div>
+        <div class="note">외부 참석자가 함께 쓰는 아이디입니다. 사번 칸에 이 아이디만 넣으면 로그인되고(개인 코드 없음), 외부인 서명지만 보입니다. 아이디를 바꾸면 기존 로그인은 끊깁니다. 비우고 저장하면 사용하지 않습니다.</div>
         <div class="field"><label>아이디 (숫자 6자리 이상)</label><input type="tel" id="gstId" autocomplete="off" inputmode="numeric" pattern="[0-9]*" maxlength="20"></div>
         <div class="row"><button class="btn pri" id="gstSave" type="button">저장</button></div>
         <div class="msg" id="gstMsg"></div>
@@ -1008,7 +1008,7 @@
   </main>
 </section>
 </template>
-<script src="assets/sign.js?v=921c6d9171"></script>
+<script src="assets/sign.js?v=0f5c2ec218"></script>
 <script src="assets/car.js?v=40f4377632"></script>
 </body>
 </html>

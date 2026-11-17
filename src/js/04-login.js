@@ -129,7 +129,7 @@
   }
   function logout(text) {
     if (staff && staff.token) srv().staffLogout(staff.token);
-    admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = '';
+    admTok = null; admData = null; admMe = null; admExp = {}; admOrder = {}; admOverHide(); $('nDept').innerHTML = ''; $('nDept')._v = null;
     ['newCard', 'gstCard', 'stCard', 'smCard', 'pcCard', 'gdCard'].forEach(function (id) { $(id).classList.remove('open'); });
     try { localStorage.removeItem('bglStInfo'); } catch (x) {} initDrop(); stD = null; stPicked = false; stSel = {};   // DID 역 정보 저장본
     setStaff(null); edus = []; renderEdus(); resetAll();
