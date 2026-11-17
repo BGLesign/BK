@@ -3598,7 +3598,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     }
   }
   if (!e && onRefund) { START({ noQr: true, educations: [] }); return; }
-  if (!e) { START(base); return; }
+  if (!e) { START(base); try { api('warmup', []).then(function () {}, function () {}); } catch (x) {} return; }   // 로그인 화면이 뜨자마자 서버를 깨워 둠 (응답 데이터 없음)
   document.documentElement.classList.add('rfBoot');
   var go = function (d) {
     d.url = base.url; d.direct = e;
