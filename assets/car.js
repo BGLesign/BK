@@ -301,11 +301,13 @@ function carIc(k) { return '<svg viewBox="0 0 24 24" fill="none" stroke="current
 function showHome() {
   show('home');
   $('bandTitle').textContent = '업무차량관리'; $('bandCar').textContent = '';
-  if (!$('carAddPin').value) $('carAddPin').value = loadMe();
   cachedGet('list', '', function (d) {
+    var ed = !!d.canEdit;                              // 관리자 2등급 이상만 차량 등록·삭제 (서버도 막음)
+    $('carAddBox').classList.toggle('hidden', !ed);
+    $('carHint').textContent = ed ? '카드 밀기: 왼쪽 운행일지·관리일지, 오른쪽 차량 삭제' : '카드 밀기: 왼쪽 운행일지·관리일지';
     $('carList2').innerHTML = (d.cars || []).map(function (c) {
       var sub = c.last ? fmt(c.last.km) + ' km' : '운행 기록 없음';      // 주행거리만 (운전자·날짜·시각은 운행 기록에서)
-      return '<div class="carSw"><div class="carAct carActL"><button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>' + carIc('del') + '<span>차량<br>삭제</span></button></div>' +
+      return '<div class="carSw">' + (ed ? '<div class="carAct carActL"><button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>' + carIc('del') + '<span>차량<br>삭제</span></button></div>' : '') +
         '<div class="carAct carActR"><a class="carRec" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행일지">' + carIc('rec') + '<span>운행<br>일지</span></a>' +
         '<a class="carRc" href="?mgr=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 관리일지">' + carIc('rc') + '<span>관리<br>일지</span></a></div>' +
         '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><span class="ci"><b>' + esc(c.no) + (c.model ? '<span class="carModel">' + esc(c.model) + '</span>' : '') + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
@@ -315,13 +317,11 @@ function showHome() {
   }, function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
 }
 
-/* ---------- 차량 등록(누구나) · 삭제(관리자 사번 + 개인 코드) ---------- */
-/** 목록 위 패널(차량 삭제 확인) 보이기·숨기기. 차량 등록 박스는 목록 아래에 늘 있음 */
-function carPanel(id) { $('carDelBox').classList.toggle('hidden', id !== 'carDelBox'); }
-/** 패널 닫고 입력칸 비우기 */
+/* ---------- 차량 등록·삭제 (관리자 2등급 이상만 화면에 보임. 로그인 확인은 기기 열쇠·토큰, 누르면 확인 창 한 번 더) ---------- */
+/** 입력칸 비우기 */
 function carReset() {
-  carSwClose(); carPanel('');
-  $('carNote').textContent = ''; $('carNo').value = ''; $('carAddMsg').textContent = ''; $('carDelPw').value = ''; $('carAddPw').value = '';
+  carSwClose();
+  $('carNote').textContent = ''; $('carNo').value = ''; $('carAddMsg').textContent = '';
 }
 function carDone(d) {                                  // 서버가 돌려준 최신 목록으로 저장본을 바꾸고 다시 그림
   try { localStorage.setItem('bglCar:list:', JSON.stringify(d)); } catch (x) {}
@@ -332,12 +332,10 @@ $('carAddOk').onclick = function () {
   if (!m) { $('carAddMsg').textContent = '차량번호를 바르게 입력하세요. (예: 12가1234 스타리아)'; $('carNo').focus(); return; }
   if (!m[2]) { $('carAddMsg').textContent = '차종도 함께 입력하세요. (예: 12가1234 스타리아)'; $('carNo').focus(); return; }
   var no = m[1].replace(/\s/g, ''), model = m[2];
-  var pin = $('carAddPin').value.trim(), pw = $('carAddPw').value.trim();
-  if (!pin) { $('carAddMsg').textContent = '관리자 사번을 입력하세요.'; $('carAddPin').focus(); return; }
-  if (!pw) { $('carAddMsg').textContent = '개인 코드를 입력하세요.'; $('carAddPw').focus(); return; }
+  if (!confirm(no + ' ' + model + ' 차량을 등록하시겠습니까?')) return;
   $('carAddOk').disabled = true; $('carAddMsg').textContent = '';
-  call('carAdd', { car: no, model: model, pin: pin, pcode: pw }).then(function (d) { $('carAddOk').disabled = false; $('carAddPw').value = ''; carDone(d); },
-    function (e) { $('carAddOk').disabled = false; $('carAddPw').value = ''; $('carAddMsg').textContent = errText(e); });
+  call('carAdd', { car: no, model: model, dev: devKey(), token: staffTok() }).then(function (d) { $('carAddOk').disabled = false; carDone(d); },
+    function (e) { $('carAddOk').disabled = false; $('carAddMsg').textContent = errText(e); });
 };
 /* 차량 카드 밀기: 왼쪽 → [운행일지]·[관리일지], 오른쪽 → [차량 삭제] (한 번에 한 카드). 민 직후의 누르기와, 열린 카드를 누르면 닫기만 */
 var SW = null, swAt = 0;
@@ -381,20 +379,12 @@ $('carList2').addEventListener('click', function (e) {
   var b = e.target.closest('.carDel'); if (!b) return;
   carSwClose();
   $('carNote').textContent = '';
-  if (b.getAttribute('data-run')) { carPanel(''); $('carNote').style.color = ''; $('carNote').textContent = '운행 종료 후 삭제 가능합니다.'; return; }
-  $('carDelNo').textContent = b.getAttribute('data-car'); $('carDelPw').value = ''; $('carDelMsg').textContent = '';
-  if (!$('carDelPin').value) $('carDelPin').value = loadMe();
-  carPanel('carDelBox'); $($('carDelPin').value ? 'carDelPw' : 'carDelPin').focus();
+  if (b.getAttribute('data-run')) { $('carNote').style.color = ''; $('carNote').textContent = '운행 종료 후 삭제 가능합니다.'; return; }
+  var no = b.getAttribute('data-car');
+  if (!confirm(no + ' 차량을 삭제하시겠습니까?\n운행 기록은 남습니다.')) return;
+  call('carRemove', { car: no, dev: devKey(), token: staffTok() }).then(carDone,
+    function (e) { $('carNote').style.color = ''; $('carNote').textContent = errText(e); });
 });
-$('carDelNoBtn').onclick = function () { $('carDelPw').value = ''; carPanel(''); };
-$('carDelOk').onclick = function () {
-  var pin = $('carDelPin').value.trim(), pw = $('carDelPw').value.trim();
-  if (!pin) { $('carDelMsg').textContent = '관리자 사번을 입력하세요.'; $('carDelPin').focus(); return; }
-  if (!pw) { $('carDelMsg').textContent = '개인 코드를 입력하세요.'; $('carDelPw').focus(); return; }
-  $('carDelOk').disabled = true; $('carDelMsg').textContent = '';
-  call('carRemove', { car: $('carDelNo').textContent, pin: pin, pcode: pw }).then(function (d) { $('carDelOk').disabled = false; $('carDelPw').value = ''; carDone(d); },
-    function (e) { $('carDelOk').disabled = false; $('carDelMsg').textContent = errText(e); });
-};
 
 /* ---------- 관리일지 (차량 카드를 왼쪽으로 밀기 → ?mgr=차량번호): 연도 단위 표·금액 합계·[PDF](그 해 전체 차량관리일지, 별지 제3호)
  * 위 [전표 등록]: 운행 고르기 → 관리일지 칸(구분·계기판 km·세부내용·금액·비고) → 촬영 → 사번·개인 코드 → 그 운행 줄에 관리일지 한 줄 ---------- */

@@ -898,21 +898,13 @@
   <main>
     <div class="card">
       <div class="carHead"><h2>차량 목록</h2></div>
-      <div class="carHint" style="margin:-6px 0 10px">카드 밀기: 왼쪽 운행일지·관리일지, 오른쪽 차량 삭제</div>
-      <div class="carPanel hidden" id="carDelBox">
-        <b id="carDelNo"></b> 차량을 삭제합니다. 운행 기록은 남습니다. 관리자만 삭제할 수 있습니다.
-        <div class="carDelRow"><input type="tel" id="carDelPin" placeholder="관리자 사번" inputmode="numeric" maxlength="20" autocomplete="off"><input type="text" id="carDelPw" class="secret" placeholder="개인 코드 6자리" inputmode="numeric" maxlength="6" autocomplete="off"></div>
-        <div class="carPanelBtns"><button type="button" class="btn gray" id="carDelNoBtn">취소</button><button type="button" class="btn del" id="carDelOk">삭제</button></div>
-        <div class="msg" id="carDelMsg"></div>
-      </div>
+      <div class="carHint" id="carHint" style="margin:-6px 0 10px">카드 밀기: 왼쪽 운행일지·관리일지</div>
       <div class="msg" id="carNote"></div>
       <div class="carList" id="carList2"><div style="padding:14px;color:var(--sub);font-size:14px">불러오는 중…</div></div>
     </div>
-    <div class="card" id="carAddBox">
+    <div class="card hidden" id="carAddBox">
       <div class="carHead"><h2>차량 등록</h2></div>
-      <div class="carHint" style="margin:-6px 0 10px">관리자만 등록할 수 있습니다. 관리자 사번과 개인 코드를 함께 입력하세요.</div>
       <div class="carAddRow"><input type="text" id="carNo" placeholder="예: 12가1234 스타리아" autocomplete="off" maxlength="40"></div>
-      <div class="carDelRow" style="margin-top:8px"><input type="tel" id="carAddPin" placeholder="관리자 사번" inputmode="numeric" maxlength="20" autocomplete="off"><input type="text" id="carAddPw" class="secret" placeholder="개인 코드" inputmode="numeric" maxlength="6" autocomplete="off"></div>
       <div style="margin-top:8px"><button type="button" class="btn pri" id="carAddOk" style="width:100%">등록</button></div>
       <div class="msg" id="carAddMsg"></div>
     </div>
@@ -1006,6 +998,6 @@
 </section>
 </template>
 <script src="assets/sign.js?v=c277626568"></script>
-<script src="assets/car.js?v=40f4377632"></script>
+<script src="assets/car.js?v=1675077152"></script>
 </body>
 </html>
