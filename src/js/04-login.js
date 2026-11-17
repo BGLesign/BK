@@ -140,7 +140,9 @@
     var pin = $('lgPin').value.trim(), pc = $('lgCode').value.trim();
     if (!pin) { msg($('lgMsg'), '사번을 입력하세요.', '#c0392b'); $('lgPin').focus(); return; }
     $('lgOk').disabled = true; msg($('lgMsg'), '확인 중…', '#6b7686');
+    var tLg = Date.now();
     srv().withSuccessHandler(function (r) {
+      try { if (r && r.t) console.log('[로그인 시간] 왕복 ' + (Date.now() - tLg) + 'ms, 서버 ' + JSON.stringify(r.t)); } catch (x) {}   // 임시 측정
       $('lgOk').disabled = false; msg($('lgMsg'), '');
       if (r.unregistered) {
         openReg(pin, r.mailDomain); return;
