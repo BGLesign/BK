@@ -124,9 +124,9 @@
         <div class="skChecks" id="nSkList"></div>
         <div class="note">안전점검: 제목은 "안전점검의 날 체크리스트"로 고정, 부서명은 서명지를 연 관리자의 부서(그 부서 직원에게만 보임), 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
-      <div class="field" id="nDeptRow"><label>부서명 <span class="hint">(여러 개 고르기)</span></label><div class="msel" id="nDept"></div></div>
+      <div class="field" id="nDeptRow"><label>대상 부서 <span class="hint">(서명하는 부서, 여러 개 고르기)</span></label><div class="msel" id="nDept"></div></div>
       <div class="field" id="nTeamRow"><label>팀 <span class="hint">(여러 개 고르기)</span></label><div class="msel" id="nTeam"></div></div>
-      <div class="note" id="nDeptNote">고른 부서(팀)의 직원과 명단에 넣은 사람에게 서명지가 보입니다. 부서가 [전체]면 모든 직원에게 보입니다. 팀은 부서를 하나만 골랐을 때 고를 수 있습니다.</div>
+      <div class="note" id="nDeptNote">주관 부서(관리하는 부서)는 내 부서로 자동 정해지고, 마감·삭제 등 관리는 주관 부서 관리자가 합니다. 대상 부서는 다른 부서도 고를 수 있습니다. 고른 부서(팀)의 직원과 명단에 넣은 사람에게 서명지가 보입니다. 부서가 [전체]면 모든 직원에게 보입니다. 팀은 부서를 하나만 골랐을 때 고를 수 있습니다.</div>
       <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
       <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
       <div class="field hidden" id="nRfMinRow"><label>고객용 QR 접수 시간</label>
@@ -997,7 +997,7 @@
   </main>
 </section>
 </template>
-<script src="assets/sign.js?v=c277626568"></script>
+<script src="assets/sign.js?v=b3ffb284c1"></script>
 <script src="assets/car.js?v=1675077152"></script>
 </body>
 </html>

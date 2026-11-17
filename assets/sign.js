@@ -379,7 +379,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       b.className = 'person' + (closed ? ' closed' : '') + (e.id === selId ? ' sel' : '');
       b.innerHTML = '<span><b></b><br><span class="rank"></span><span class="cnt1"></span></span>' + (pdfOk ? '<button type="button" class="pdfBtn">📄 PDF</button>' : '<span class="badge"></span>');
       b.querySelector('b').textContent = e.title;
-      b.querySelector('.rank').textContent = [e.dept, e.date].filter(Boolean).join(' · ');
+      b.querySelector('.rank').textContent = [e.dept, e.host ? '주관 ' + e.host : '', e.date].filter(Boolean).join(' · ');
       b.querySelector('.cnt1').textContent = '서명 완료 ' + (e.count || 0) + '명';
       if (!pdfOk) b.querySelector('.badge').textContent = closed ? '접수 마감' : '선택';
       if (pdfOk && e.pdfDl) { var dl = document.createElement('span'); dl.className = 'pdfDl'; dl.textContent = '✓ PDF 받음 · ' + (e.pdfDl.n || '') + ' ' + (e.pdfDl.at || ''); b.firstChild.appendChild(document.createElement('br')); b.firstChild.appendChild(dl); }
@@ -2133,7 +2133,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     ord = ord.filter(function (k) { return byKey[k]; });
     e.signers.forEach(function (s) { if (ord.indexOf(s.key) < 0) ord.push(s.key); });
     $('oTitle').textContent = e.title;
-    $('oSub').textContent = [e.dept, e.date].filter(Boolean).join(' · ') + ' · 서명 ' + e.signers.length + '명' + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
+    $('oSub').textContent = [e.dept, e.host ? '주관 ' + e.host : '', e.date].filter(Boolean).join(' · ') + ' · 서명 ' + e.signers.length + '명' + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
     var box = $('oList'); box.innerHTML = '';
     if (!ord.length) box.innerHTML = '<div class="srow"><span class="hint">아직 서명한 사람이 없습니다.</span></div>';
     ord.forEach(function (k, i) {
@@ -2860,7 +2860,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     if (e.safety) { var kchip = document.createElement('span'); kchip.className = 'chip ext'; kchip.textContent = '안전점검'; q('.t').appendChild(kchip); }
     if (e.refund) { var rchip = document.createElement('span'); rchip.className = 'chip rf'; rchip.textContent = '환불 등록'; q('.t').appendChild(rchip);
       var rcnt = document.createElement('span'); rcnt.style.cssText = 'margin-left:6px;font-size:14px;font-weight:700;vertical-align:1px'; rcnt.textContent = e.signers.length + '명'; q('.t').appendChild(rcnt); }
-    var tInfo = [e.dept, e.team, e.date].filter(Boolean).join(' · ');      // 부서명·팀·날짜는 제목 줄의 표시 옆에 (내보내기 창만, 정보 수정 창은 아래 입력칸에 같은 값)
+    var tInfo = [e.dept, e.team, e.host ? '주관 ' + e.host : '', e.date].filter(Boolean).join(' · ');      // 부서명·팀·날짜는 제목 줄의 표시 옆에 (내보내기 창만, 정보 수정 창은 아래 입력칸에 같은 값)
     if (tInfo && !e.refund && mode === 'exp') { var tI = document.createElement('span'); tI.style.cssText = 'margin-left:6px;font-size:13px;font-weight:400;color:var(--sub)'; tI.textContent = tInfo; q('.t').appendChild(tI); }
     q('.d').textContent = (e.tpl || '') + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
     q('.cnt').textContent = '서명 ' + e.signers.length + (e.roster ? '/' + e.roster : '') + '명';   // 접속 코드는 정보 수정 창의 입력칸에

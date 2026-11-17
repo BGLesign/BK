@@ -164,7 +164,7 @@
       b.className = 'person' + (closed ? ' closed' : '') + (e.id === selId ? ' sel' : '');
       b.innerHTML = '<span><b></b><br><span class="rank"></span><span class="cnt1"></span></span>' + (pdfOk ? '<button type="button" class="pdfBtn">📄 PDF</button>' : '<span class="badge"></span>');
       b.querySelector('b').textContent = e.title;
-      b.querySelector('.rank').textContent = [e.dept, e.date].filter(Boolean).join(' · ');
+      b.querySelector('.rank').textContent = [e.dept, e.host ? '주관 ' + e.host : '', e.date].filter(Boolean).join(' · ');
       b.querySelector('.cnt1').textContent = '서명 완료 ' + (e.count || 0) + '명';
       if (!pdfOk) b.querySelector('.badge').textContent = closed ? '접수 마감' : '선택';
       if (pdfOk && e.pdfDl) { var dl = document.createElement('span'); dl.className = 'pdfDl'; dl.textContent = '✓ PDF 받음 · ' + (e.pdfDl.n || '') + ' ' + (e.pdfDl.at || ''); b.firstChild.appendChild(document.createElement('br')); b.firstChild.appendChild(dl); }

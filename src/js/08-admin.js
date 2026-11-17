@@ -167,7 +167,7 @@
     ord = ord.filter(function (k) { return byKey[k]; });
     e.signers.forEach(function (s) { if (ord.indexOf(s.key) < 0) ord.push(s.key); });
     $('oTitle').textContent = e.title;
-    $('oSub').textContent = [e.dept, e.date].filter(Boolean).join(' · ') + ' · 서명 ' + e.signers.length + '명' + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
+    $('oSub').textContent = [e.dept, e.host ? '주관 ' + e.host : '', e.date].filter(Boolean).join(' · ') + ' · 서명 ' + e.signers.length + '명' + (e.pages > 1 ? ' · ' + e.pages + '페이지' : '');
     var box = $('oList'); box.innerHTML = '';
     if (!ord.length) box.innerHTML = '<div class="srow"><span class="hint">아직 서명한 사람이 없습니다.</span></div>';
     ord.forEach(function (k, i) {
