@@ -762,8 +762,10 @@
   .carList { display:flex; flex-direction:column; gap:8px; margin-top:10px; }
   .carItem { display:flex !important; align-items:center; justify-content:space-between; gap:10px; }
   .carItem .ci { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
-  .carFav { flex:none; width:36px; height:44px; margin:0 -4px 0 -6px; padding:0; border:0; background:transparent; color:#b8c0d4; cursor:pointer; display:flex; align-items:center; justify-content:center; }   /* 즐겨찾기 별: 꺼짐=빈 별 회색, 켜짐=채운 별 노랑 */
-  .carFav svg { width:26px; height:26px; fill:none; }
+  #carList2 .carItem { gap:6px; } #carList2 a.camBtn.big { width:104px; padding:0 4px; font-size:13px; white-space:nowrap; text-align:center; align-items:center; }   /* 별 자리만큼 촬영 버튼을 줄여 글자가 안 접히게 */
+  #carList2 .carModel { white-space:nowrap; } #carList2 .carItem .ci small { display:flex; flex-wrap:wrap; align-items:center; gap:2px 0; } #carList2 .ci small { white-space:nowrap; }
+  .carFav { flex:none; width:30px; height:44px; margin:0 -6px 0 -8px; padding:0; border:0; background:transparent; color:#b8c0d4; cursor:pointer; display:flex; align-items:center; justify-content:center; }   /* 즐겨찾기 별: 꺼짐=빈 별 회색, 켜짐=채운 별 노랑 */
+  .carFav svg { width:24px; height:24px; fill:none; }
   .carFav.on { color:#e6a100; } .carFav.on svg { fill:currentColor; }
   .carFavSep { border-top:1px dashed #b8c0d4; margin:2px 4px; }
   .carItem .ci b { font-size:19px; }
