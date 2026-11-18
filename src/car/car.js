@@ -305,17 +305,37 @@ function showHome() {
     var ed = !!d.canEdit;                              // 관리자 2등급 이상만 차량 등록·삭제 (서버도 막음)
     $('carAddBox').classList.toggle('hidden', !ed);
     $('carHint').textContent = ed ? '카드 밀기: 왼쪽 운행일지·관리일지, 오른쪽 차량 삭제' : '카드 밀기: 왼쪽 운행일지·관리일지';
-    $('carList2').innerHTML = (d.cars || []).map(function (c) {
+    HOME_D = d; drawHome();
+  }, function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
+}
+/* 즐겨찾기: 이 휴대폰(localStorage bglCarFav)에만 저장, 별을 누르면 목록 맨 위로 (즐겨찾기끼리·나머지끼리는 서버가 준 차례 그대로) */
+var HOME_D = null;
+function favGet() { try { return JSON.parse(localStorage.getItem('bglCarFav') || '[]') || []; } catch (x) { return []; } }
+function favSet(a) { try { localStorage.setItem('bglCarFav', JSON.stringify(a)); } catch (x) {} }
+function drawHome() {
+  var d = HOME_D; if (!d) return;
+  var ed = !!d.canEdit, fav = favGet(), all = (d.cars || []), nFav = 0;
+  var cars = all.filter(function (c) { return fav.indexOf(c.no) >= 0; }); nFav = cars.length;
+  cars = cars.concat(all.filter(function (c) { return fav.indexOf(c.no) < 0; }));
+  var html = cars.map(function (c, i) {
+      var isFav = i < nFav;
       var sub = c.last ? fmt(c.last.km) + ' km' : '운행 기록 없음';      // 주행거리만 (운전자·날짜·시각은 운행 기록에서)
       return '<div class="carSw">' + (ed ? '<div class="carAct carActL"><button type="button" class="carDel" data-car="' + esc(c.no) + '"' + (c.run ? ' data-run="1"' : '') + '>' + carIc('del') + '<span>차량<br>삭제</span></button></div>' : '') +
         '<div class="carAct carActR"><a class="carRec" href="?rec=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 운행일지">' + carIc('rec') + '<span>운행<br>일지</span></a>' +
         '<a class="carRc" href="?mgr=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 관리일지">' + carIc('rc') + '<span>관리<br>일지</span></a></div>' +
-        '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><span class="ci"><b>' + esc(c.no) + (c.model ? '<span class="carModel">' + esc(c.model) + '</span>' : '') + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
+        '<div class="carItem card" style="margin:0;box-shadow:none;border:1px solid var(--line)"><button type="button" class="carFav' + (isFav ? ' on' : '') + '" data-fav="' + esc(c.no) + '" aria-label="' + esc(c.no) + ' 즐겨찾기 ' + (isFav ? '해제' : '추가') + '" aria-pressed="' + isFav + '"><svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.8 5.8 6.2.9-4.5 4.4 1.1 6.2L12 17.4 6.4 20.3l1.1-6.2L3 9.7l6.2-.9z"/></svg></button><span class="ci"><b>' + esc(c.no) + (c.model ? '<span class="carModel">' + esc(c.model) + '</span>' : '') + '</b><small>' + stateTag(c.run) + sub + '</small></span>' +
         '<span class="carBtns"><a class="camBtn big" href="?car=' + encodeURIComponent(c.no) + '" aria-label="' + esc(c.no) + ' 주행거리 촬영">' +
         '<svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>주행거리 촬영</a></span></div></div>';
-    }).join('') || '<div style="padding:14px;color:var(--sub);font-size:14px">등록된 차량이 없습니다.</div>';
-  }, function (e) { $('carList2').innerHTML = '<div class="msg">' + esc(errText(e)) + '</div>'; });
+    });
+  if (nFav > 0 && nFav < cars.length) html.splice(nFav, 0, '<div class="carFavSep"></div>');   // 즐겨찾기와 나머지 사이 점선
+  $('carList2').innerHTML = html.join('') || '<div style="padding:14px;color:var(--sub);font-size:14px">등록된 차량이 없습니다.</div>';
 }
+$('carList2').addEventListener('click', function (e) {
+  var b = e.target.closest('.carFav'); if (!b) return;
+  var no = b.getAttribute('data-fav'), f = favGet(), i = f.indexOf(no);
+  if (i >= 0) f.splice(i, 1); else f.push(no);
+  favSet(f); drawHome();
+});
 
 /* ---------- 차량 등록·삭제 (관리자 2등급 이상만 화면에 보임. 로그인 확인은 기기 열쇠·토큰, 누르면 확인 창 한 번 더) ---------- */
 /** 입력칸 비우기 */
