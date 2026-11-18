@@ -2374,8 +2374,8 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
    * 관리자: 보낼 역(기본 전체, [역 고르기]로 일부만)·환불 등록 QR 띄우기·내리기·안내 이미지 목록·역 코드
    * 근무자: 역 코드로 우리 역 안내 이미지 목록만. 서버가 GitHub에 올리고 역 PC는 10초마다 확인 (반영 약 1분) */
   var ST_MAX = 10;
-  function stPageUrl() { return /sign\.html/.test(qrUrl) ? qrUrl.replace(/sign\.html.*$/, 'station.html') : 'https://bglesigne.github.io/BK/station.html'; }
-  function stImgBase() { try { return new URL('../BK-st/', stPageUrl()).href; } catch (x) { return 'https://bglesigne.github.io/BK-st/'; } }
+  function stPageUrl() { return /sign\.html/.test(qrUrl) ? qrUrl.replace(/sign\.html.*$/, 'station.html') : 'https://bglesign.github.io/BK/station.html'; }
+  function stImgBase() { try { return new URL('../BK-st/', stPageUrl()).href; } catch (x) { return 'https://bglesign.github.io/BK-st/'; } }
   function p2(n) { return (n < 10 ? '0' : '') + n; }
   /** 지금 보여 줄 이미지인지 (역 화면 station.html의 live와 같은 규칙: 기간은 끝 날 포함, 시간대는 끝 시각 전까지·밤 넘김 가능) */
   function stLive(it, d) {
