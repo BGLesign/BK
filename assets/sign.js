@@ -1190,6 +1190,27 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     t.appendChild(b);
   });
 
+  /* ---------- PC 와콤 펜 (화면 없는 판, 예: CTL-4100) ----------
+     와콤 기본 설정(판 전체 = 모니터 전체) 그대로 두고, 판 가운데 가로 띠(서명 칸과 같은 비율)를 서명 칸에 맞춤.
+     펜 커서가 화면 어디에 있든 선은 서명 칸에 그려짐. 띠 밖(판 위·아래)은 안 그려짐. 서명 화면에서 펜으로는 버튼이 안 눌림(마우스로) */
+  var TAB_W = 152, TAB_H = 95;                     // 판 작업 영역(mm)
+  function tabPc() { return !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches); }   // 마우스가 주 입력인 PC (휴대폰·태블릿 펜은 제외)
+  function tabPen(e) { return e.pointerType === 'pen' && tabPc(); }
+  function tabPos(cv, e) {                         // 판 위치 → 서명 칸 좌표, out: 띠 밖
+    var w = cv.clientWidth, h = cv.clientHeight, S = window.screen || {};
+    var u0 = (e.screenX - (S.availLeft || 0)) / (S.width || 1), v0 = (e.screenY - (S.availTop || 0)) / (S.height || 1);
+    var bw = Math.min(TAB_W, TAB_H * w / h), bh = bw * h / w;
+    var u = (u0 - (1 - bw / TAB_W) / 2) * TAB_W / bw, v = (v0 - (1 - bh / TAB_H) / 2) * TAB_H / bh;
+    return { x: u * w, y: v * h, out: u < 0 || u > 1 || v < 0 || v > 1 };
+  }
+  function tabHook(cv, down) {                     // 서명 칸이 보이는 동안 펜을 판에 대면(화면 어디든) 그 칸으로 보냄
+    var on = function (e) { return tabPen(e) && cv.offsetParent && cv.clientWidth; };
+    window.addEventListener('pointerdown', function (e) { if (e.target === cv || !on(e)) return; e.preventDefault(); e.stopPropagation(); down(e); }, true);
+    window.addEventListener('click', function (e) { if (on(e)) { e.preventDefault(); e.stopPropagation(); } }, true);
+  }
+  if (tabPc()) [].forEach.call(document.querySelectorAll('.penHint'), function (x) { x.classList.remove('hidden'); });
+  var PEN_OUT = '판 가운데 띠 안에 써 주세요.';
+
   /* ---------- 서명 패드 ---------- */
   // 획(stroke)을 '가상 좌표'로 저장해 두었다가, 화면 크기가 바뀌면(가로/세로 전환 등) 비율을 유지한 채 다시 그린다.
   var cv = $('pad'), ctx = cv.getContext('2d');
@@ -1217,7 +1238,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   }
   function toV(p) { var t = xf(); return { x: (p.x - t.ox) / t.s, y: (p.y - t.oy) / t.s }; }
   function toC(p) { var t = xf(); return { x: p.x * t.s + t.ox, y: p.y * t.s + t.oy }; }
-  function pos(e) { var b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; }
+  function pos(e) { if (tabPen(e)) return tabPos(cv, e); var b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; }
 
   function redraw() {
     ctx.clearRect(0, 0, cv.clientWidth, cv.clientHeight);
@@ -1231,20 +1252,24 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     });
   }
 
-  cv.addEventListener('pointerdown', function (e) {
+  function padDown(e) {
     e.preventDefault();
     if (submitting) return;                                       // 제출 중에는 서명 칸에 더 그려지지 않게
     if (e.pointerType === 'mouse') {                              // 마우스·터치패드로는 서명 안 됨 (손가락·펜만)
-      msg($('msg2'), '서명은 휴대폰이나 태블릿 화면에 손가락(또는 펜)으로 해 주세요.', '#c0392b');
+      msg($('msg2'), '서명은 휴대폰·태블릿 화면이나 PC 와콤 펜으로 해 주세요.', '#c0392b');
       return;
     }
-    try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+    try { cv.setPointerCapture(e.pointerId); } catch (x) {}       // 띠 밖이어도 잡아 둠 (펜을 뗄 때 아래 버튼이 눌리지 않게)
+    var p0 = pos(e);
+    if (p0.out) { msg($('msg2'), PEN_OUT, '#c0392b'); return; }
     if (!vw) { vw = cv.clientWidth; vh = cv.clientHeight; }
-    drawing = true; last = pos(e);
+    drawing = true; last = p0;
     cur = [toV(last)]; strokes.push(cur);
     ctx.beginPath(); ctx.arc(last.x, last.y, 1.2, 0, 6.283); ctx.fill(); drawn += 1;
     $('submit').disabled = drawn < 6; $('msg2').textContent = '';   // 충분히 서명해야 제출 버튼 켜짐 ('서명이 너무 짧습니다' 기준)
-  });
+  }
+  cv.addEventListener('pointerdown', padDown);
+  tabHook(cv, padDown);
   cv.addEventListener('pointermove', function (e) {
     if (!drawing || submitting) return; e.preventDefault();
     var p = pos(e);
@@ -1820,7 +1845,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     var xf = function () { var w = cv.clientWidth, h = cv.clientHeight, sc = Math.min(w / vw, h / vh); return { s: sc, ox: (w - vw * sc) / 2, oy: (h - vh * sc) / 2 }; };
     var toV = function (p) { var t = xf(); return { x: (p.x - t.ox) / t.s, y: (p.y - t.oy) / t.s }; };
     var toC = function (p) { var t = xf(); return { x: p.x * t.s + t.ox, y: p.y * t.s + t.oy }; };
-    var at = function (e) { var b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+    var at = function (e) { if (tabPen(e)) return tabPos(cv, e); var b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
     P.redraw = function () {
       c2.clearRect(0, 0, cv.clientWidth, cv.clientHeight);
       if (!vw) return;
@@ -1841,17 +1866,21 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       P.redraw();
     };
     P.clear = function () { P.strokes = []; P.n = 0; vw = 0; vh = 0; c2.clearRect(0, 0, cv.clientWidth, cv.clientHeight); if (P.onN) P.onN(0); };
-    cv.addEventListener('pointerdown', function (e) {
+    var padDown = function (e) {
       e.preventDefault();
       if (P.locked) return;
-      if (e.pointerType === 'mouse') { msg(msgEl, '서명은 휴대폰이나 태블릿 화면에 손가락(또는 펜)으로 해 주세요.', '#c0392b'); return; }
+      if (e.pointerType === 'mouse') { msg(msgEl, '서명은 휴대폰·태블릿 화면이나 PC 와콤 펜으로 해 주세요.', '#c0392b'); return; }
       try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      var p0 = at(e);
+      if (p0.out) { msg(msgEl, PEN_OUT, '#c0392b'); return; }
       if (!vw) { vw = cv.clientWidth; vh = cv.clientHeight; }
-      down = true; lp = at(e); cur = [toV(lp)]; P.strokes.push(cur); P.n++;
+      down = true; lp = p0; cur = [toV(lp)]; P.strokes.push(cur); P.n++;
       c2.beginPath(); c2.arc(lp.x, lp.y, 1.2, 0, 6.283); c2.fill(); msg(msgEl, '');
       if (onDraw) onDraw();
       if (P.onN) P.onN(P.n);
-    });
+    };
+    cv.addEventListener('pointerdown', padDown);
+    tabHook(cv, padDown);
     cv.addEventListener('pointermove', function (e) {
       if (!down) return; e.preventDefault();
       var p = at(e);

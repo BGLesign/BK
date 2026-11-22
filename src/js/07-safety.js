@@ -257,7 +257,7 @@
     var xf = function () { var w = cv.clientWidth, h = cv.clientHeight, sc = Math.min(w / vw, h / vh); return { s: sc, ox: (w - vw * sc) / 2, oy: (h - vh * sc) / 2 }; };
     var toV = function (p) { var t = xf(); return { x: (p.x - t.ox) / t.s, y: (p.y - t.oy) / t.s }; };
     var toC = function (p) { var t = xf(); return { x: p.x * t.s + t.ox, y: p.y * t.s + t.oy }; };
-    var at = function (e) { var b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
+    var at = function (e) { if (tabPen(e)) return tabPos(cv, e); var b = cv.getBoundingClientRect(); return { x: e.clientX - b.left, y: e.clientY - b.top }; };
     P.redraw = function () {
       c2.clearRect(0, 0, cv.clientWidth, cv.clientHeight);
       if (!vw) return;
@@ -278,17 +278,21 @@
       P.redraw();
     };
     P.clear = function () { P.strokes = []; P.n = 0; vw = 0; vh = 0; c2.clearRect(0, 0, cv.clientWidth, cv.clientHeight); if (P.onN) P.onN(0); };
-    cv.addEventListener('pointerdown', function (e) {
+    var padDown = function (e) {
       e.preventDefault();
       if (P.locked) return;
-      if (e.pointerType === 'mouse') { msg(msgEl, '서명은 휴대폰이나 태블릿 화면에 손가락(또는 펜)으로 해 주세요.', '#c0392b'); return; }
+      if (e.pointerType === 'mouse') { msg(msgEl, '서명은 휴대폰·태블릿 화면이나 PC 와콤 펜으로 해 주세요.', '#c0392b'); return; }
       try { cv.setPointerCapture(e.pointerId); } catch (x) {}
+      var p0 = at(e);
+      if (p0.out) { msg(msgEl, PEN_OUT, '#c0392b'); return; }
       if (!vw) { vw = cv.clientWidth; vh = cv.clientHeight; }
-      down = true; lp = at(e); cur = [toV(lp)]; P.strokes.push(cur); P.n++;
+      down = true; lp = p0; cur = [toV(lp)]; P.strokes.push(cur); P.n++;
       c2.beginPath(); c2.arc(lp.x, lp.y, 1.2, 0, 6.283); c2.fill(); msg(msgEl, '');
       if (onDraw) onDraw();
       if (P.onN) P.onN(P.n);
-    });
+    };
+    cv.addEventListener('pointerdown', padDown);
+    tabHook(cv, padDown);
     cv.addEventListener('pointermove', function (e) {
       if (!down) return; e.preventDefault();
       var p = at(e);
