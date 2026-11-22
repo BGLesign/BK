@@ -1191,8 +1191,8 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   });
 
   /* ---------- PC 와콤 펜 (화면 없는 판, 예: CTL-4100) ----------
-     와콤 기본 설정(판 전체 = 모니터 전체) 그대로 두고, 판 가운데 가로 띠(서명 칸과 같은 비율)를 서명 칸에 맞춤.
-     펜 커서가 화면 어디에 있든 선은 서명 칸에 그려짐. 띠 밖(판 위·아래)은 안 그려짐. 서명 화면에서 펜으로는 버튼이 안 눌림(마우스로) */
+     와콤 기본 설정(판 전체 = 모니터 전체) 그대로 두고, 판을 서명 칸에 맞춤. PC 서명 칸은 판 비율(16:10)이라 판 전체 사용
+     (칸 비율이 다르면 가운데 같은 비율 부분만). 펜 커서가 화면 어디에 있든 선은 서명 칸에 그려짐. 서명 화면에서 펜으로는 버튼이 안 눌림(마우스로) */
   var TAB_W = 152, TAB_H = 95;                     // 판 작업 영역(mm)
   function tabPc() { return !!(window.matchMedia && matchMedia('(hover: hover) and (pointer: fine)').matches); }   // 마우스가 주 입력인 PC (휴대폰·태블릿 펜은 제외)
   function tabPen(e) { return e.pointerType === 'pen' && tabPc(); }
@@ -1209,7 +1209,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     window.addEventListener('click', function (e) { if (on(e)) { e.preventDefault(); e.stopPropagation(); } }, true);
   }
   if (tabPc()) [].forEach.call(document.querySelectorAll('.penHint'), function (x) { x.classList.remove('hidden'); });
-  var PEN_OUT = '판 가운데 띠 안에 써 주세요.';
+  var PEN_OUT = '판 안쪽에 써 주세요.';
 
   /* ---------- 서명 패드 ---------- */
   // 획(stroke)을 '가상 좌표'로 저장해 두었다가, 화면 크기가 바뀌면(가로/세로 전환 등) 비율을 유지한 채 다시 그린다.
@@ -1218,6 +1218,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
 
   /* 세로 화면: 서명 칸 높이를 남은 화면에 맞춤 (160~280px) → 아래 버튼까지 한 화면에 보이게 */
   function fitPad() {
+    if (tabPc()) { cv.style.height = Math.round(cv.clientWidth * TAB_H / TAB_W + cv.offsetHeight - cv.clientHeight) + 'px'; return; }   // PC: 와콤 판 비율(16:10) → 판 전체가 서명 칸
     if (!window.matchMedia || !window.matchMedia('(orientation: portrait)').matches) { cv.style.height = ''; return; }
     var top = cv.getBoundingClientRect().top + (window.scrollY || 0);
     var acts = document.querySelector('#s2 .actions');
@@ -1911,6 +1912,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   /* 세로 화면: 서명 칸 높이를 남은 화면에 맞춤 (160~280px) → 아래 버튼까지 한 화면에 보이게 (가로는 CSS) */
   skPad.fit = function () {
     var cv = $('skPad');
+    if (tabPc()) { cv.style.height = Math.round(cv.clientWidth * TAB_H / TAB_W + cv.offsetHeight - cv.clientHeight) + 'px'; return; }   // PC: 와콤 판 비율(16:10) → 판 전체가 서명 칸
     if (!window.matchMedia || !window.matchMedia('(orientation: portrait)').matches) { cv.style.height = ''; return; }
     var top = cv.getBoundingClientRect().top + (window.scrollY || 0), acts = document.querySelector('#skSig .actions');
     var h = Math.round(window.innerHeight - top - ((acts ? acts.offsetHeight : 110) + 12 + 14));

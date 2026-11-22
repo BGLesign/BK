@@ -323,6 +323,7 @@
   /* 세로 화면: 서명 칸 높이를 남은 화면에 맞춤 (160~280px) → 아래 버튼까지 한 화면에 보이게 (가로는 CSS) */
   skPad.fit = function () {
     var cv = $('skPad');
+    if (tabPc()) { cv.style.height = Math.round(cv.clientWidth * TAB_H / TAB_W + cv.offsetHeight - cv.clientHeight) + 'px'; return; }   // PC: 와콤 판 비율(16:10) → 판 전체가 서명 칸
     if (!window.matchMedia || !window.matchMedia('(orientation: portrait)').matches) { cv.style.height = ''; return; }
     var top = cv.getBoundingClientRect().top + (window.scrollY || 0), acts = document.querySelector('#skSig .actions');
     var h = Math.round(window.innerHeight - top - ((acts ? acts.offsetHeight : 110) + 12 + 14));
