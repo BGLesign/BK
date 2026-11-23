@@ -2,6 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<!-- 보안(CSP): 허용한 곳에서만 스크립트·통신·이미지. 새 외부 주소를 쓰면 여기에 추가 (빠지면 그 기능이 막힘)
+     cdn.jsdelivr = pdf.js·pdf-lib·tesseract, script.google(usercontent) = 서버, bglesign.github.io = 역 이미지, www.bglrt.com = 예비 로고 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://bglesign.github.io https://www.bglrt.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="preconnect" href="https://script.google.com" crossorigin>
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

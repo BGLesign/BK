@@ -2,6 +2,9 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
+<!-- 보안(CSP): 허용한 곳에서만 스크립트·통신·이미지. 새 외부 주소를 쓰면 여기에 추가 (빠지면 그 기능이 막힘)
+     cdn.jsdelivr = pdf.js·pdf-lib·tesseract, script.google(usercontent) = 서버, bglesign.github.io = 역 이미지, www.bglrt.com = 예비 로고 -->
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net 'wasm-unsafe-eval'; worker-src 'self' blob: https://cdn.jsdelivr.net; connect-src 'self' data: https://script.google.com https://script.googleusercontent.com https://cdn.jsdelivr.net; img-src 'self' data: blob: https://bglesign.github.io https://www.bglrt.com; style-src 'self' 'unsafe-inline'; font-src 'self' data:; media-src 'self' blob:; object-src 'none'; base-uri 'self'; form-action 'none'">
 <link rel="preconnect" href="https://script.google.com" crossorigin>
 <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -12,8 +15,7 @@
 <header>
   <div class="brand" id="brand">
     <img id="logo" alt="부산-김해경전철" referrerpolicy="no-referrer"
-      src="assets/logo.png"
-      onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/english/img/inc/logo_bgl%28k%29.png';}else{document.getElementById('brand').className='brand noimg';}">
+      src="assets/logo.png">
     <span class="wm"><i>BGL</i>부산-김해경전철</span>
   </div>
   <h1>e-싸인</h1>
@@ -842,8 +844,7 @@
 <div id="chrome" class="hidden">
   <header>
     <div class="brand" id="brand">
-      <img alt="부산-김해경전철" referrerpolicy="no-referrer" src="assets/logo.png"
-        onerror="if(!this.dataset.alt){this.dataset.alt=1;this.src='https://www.bglrt.com/_res/english/img/inc/logo_bgl%28k%29.png';}else{this.parentNode.className='brand noimg';}">
+      <img alt="부산-김해경전철" referrerpolicy="no-referrer" src="assets/logo.png">
       <span class="wm"><i>BGL</i>부산-김해경전철</span>
     </div>
     <div class="appSw" id="appSw" role="tablist"><a class="sw" data-k="sign" href="#" role="tab" aria-selected="false">e-싸인</a><a class="sw on" data-k="car" href="?" role="tab" aria-selected="true">차량관리</a><a class="sw" data-k="kiosk" href="#" role="tab" aria-selected="false">DID</a></div>
@@ -1005,7 +1006,7 @@
   </main>
 </section>
 </template>
-<script src="assets/sign.js?v=2e107d87e2"></script>
-<script src="assets/car.js?v=a8f945b775"></script>
+<script src="assets/sign.js?v=23a90605eb"></script>
+<script src="assets/car.js?v=daafc3a528"></script>
 </body>
 </html>

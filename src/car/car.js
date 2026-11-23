@@ -23,6 +23,7 @@ var CARAPP = (function () {
     box.innerHTML = ''; box.appendChild(host);
     var R = host.attachShadow({ mode: 'open' });
     R.appendChild(document.getElementById('carTpl').content.cloneNode(true));
+    logoFallback(R.querySelector('.brand img'));
     var offs = [], dead = false;
     var ctx = {
       id: id, search: search, fromHome: !!o.fromHome,
@@ -838,7 +839,7 @@ function toJpeg(c, maxW) {
 /* ===================== 숫자 자동 인식 (Tesseract.js, 폰 안에서 무료) =====================
  * 디지털(7세그먼트·LCD) 숫자 모델과 영문 모델을 함께 띄워 화면마다 번갈아 읽음 (둘 중 먼저 준비된 것부터)
  * 디지털 숫자 모델: github.com/Shreeshrii/tessdata_ssd 의 ssd_int (1.4MB) */
-var OCR_SSD = 'https://cdn.jsdelivr.net/gh/Shreeshrii/tessdata_ssd@master';
+var OCR_SSD = 'https://cdn.jsdelivr.net/gh/Shreeshrii/tessdata_ssd@e493a10a4bf81632506cf24ba99d83854afff9f6';   // 커밋 고정 (바뀌지 않게)
 function loadOcr() {
   if (OCR.workers || OCR.failed || OCR.loading) return;
   OCR.loading = true; OCR.workers = []; OCR.k = 0;
@@ -855,7 +856,7 @@ function loadOcr() {
   var go = function () { add('ssd_int', { langPath: OCR_SSD, gzip: false }); add('eng', {}); };
   if (window.Tesseract) return go();                   // 앞 화면에서 이미 받음
   var sc = document.createElement('script');
-  sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js';
+  sc.src = 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js';   // 버전 고정 (안에서 받는 일꾼·엔진·영문 데이터도 이 버전 기준 고정 주소)
   sc.onload = go;
   sc.onerror = function () { clearTimeout(to); ocrFail(); };
   document.head.appendChild(sc);

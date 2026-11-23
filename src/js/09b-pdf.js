@@ -194,7 +194,7 @@
       if (seq !== PU.seq) return;
       PU.b64 = bytesB64(u8);
       pdfJs().then(function (lib) {
-        return lib.getDocument({ data: u8.slice(), cMapUrl: PDFJS_BASE + 'cmaps/', cMapPacked: true, standardFontDataUrl: PDFJS_BASE + 'standard_fonts/' }).promise;
+        return lib.getDocument({ data: u8.slice(), cMapUrl: PDFJS_BASE + 'cmaps/', cMapPacked: true, standardFontDataUrl: PDFJS_BASE + 'standard_fonts/', isEvalSupported: false }).promise;
       }).then(function (doc) {
         if (doc.numPages > PU_MAX_PAGES) throw new Error('PDF는 ' + PU_MAX_PAGES + '쪽까지 올릴 수 있습니다.');
         var chain = Promise.resolve(), found = [], textAny = false;
@@ -372,7 +372,7 @@
     got.then(function (d) {
       PV.last = { id: e.id, d: d };
       return pdfJs().then(function (lib) {
-        return lib.getDocument({ data: b64Bytes(d.pdf), cMapUrl: PDFJS_BASE + 'cmaps/', cMapPacked: true, standardFontDataUrl: PDFJS_BASE + 'standard_fonts/' }).promise;
+        return lib.getDocument({ data: b64Bytes(d.pdf), cMapUrl: PDFJS_BASE + 'cmaps/', cMapPacked: true, standardFontDataUrl: PDFJS_BASE + 'standard_fonts/', isEvalSupported: false }).promise;
       }).then(function (doc) { if (seq === PV.seq) return pvRender(doc, d.mine, seq); });
     }).then(function () {
       if (seq !== PV.seq) return;

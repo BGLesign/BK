@@ -11,6 +11,17 @@ function api(name, args) {
           function () { throw new Error('서버에 연결할 수 없습니다. 인터넷 연결을 확인하세요.'); })
     .then(function (j) { if (!j.ok) throw new Error(j.error || '오류가 났습니다.'); return j.data; });
 }
+/** 로고가 안 뜨면 회사 사이트 로고 → 그것도 안 되면 글자만 (CSP 때문에 HTML onerror 대신 여기서, 차량 화면도 씀) */
+function logoFallback(img) {
+  if (!img) return;
+  var bad = function () {
+    if (!img.dataset.alt) { img.dataset.alt = 1; img.src = 'https://www.bglrt.com/_res/english/img/inc/logo_bgl%28k%29.png'; }
+    else img.parentNode.className = 'brand noimg';
+  };
+  img.addEventListener('error', bad);
+  if (img.complete && !img.naturalWidth) bad();          // 스크립트보다 먼저 실패한 경우
+}
+logoFallback(document.getElementById('logo'));
 function errText(e) { return String(e && e.message ? e.message : e || '오류가 났습니다.').replace(/^(Error|Exception):s*/, ''); }
 /** 가운데 로딩 표시: 도는 동그라미 + 문구 (0.3초 넘게 걸릴 때만). 돌려준 함수를 부르면 끔 (여러 개가 겹치면 마지막에 끔) */
 var BUSY = { n: 0, t: null, el: null };
