@@ -528,14 +528,36 @@ $('crcList').addEventListener('click', function (e) {
 function crcFileChange() {
   var f = this.files && this.files[0]; this.value = '';
   if (!f) return;
-  loadImg(f).then(function (img) {
-    var w = Math.min(900, img.naturalWidth), c = document.createElement('canvas');
-    c.width = w; c.height = Math.round(img.naturalHeight * w / img.naturalWidth);
+  var pdf = f.type === 'application/pdf' || /\.pdf$/i.test(f.name || '');   // 스캔한 PDF: 첫 쪽을 그림으로 바꿔 사진처럼 올림 (서버는 그대로)
+  if (pdf) $('crcMsg').textContent = 'PDF를 여는 중…';
+  (pdf ? pdfFirstPage(f) : loadImg(f)).then(function (img) {
+    var nw = img.naturalWidth || img.width, nh = img.naturalHeight || img.height;
+    var w = Math.min(900, nw), c = document.createElement('canvas');
+    c.width = w; c.height = Math.round(nh * w / nw);
     c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); gray(c);
     CRC.img = toJpeg(c, 900) || '';
-    $('crcMsg').textContent = CRC.img ? '' : '사진이 너무 큽니다. 전표만 가까이 다시 찍어 주세요.';
+    $('crcMsg').textContent = CRC.img ? (pdf ? 'PDF 첫 쪽을 전표 사진으로 넣었습니다.' : '') : '사진이 너무 큽니다. 전표만 가까이 다시 찍어 주세요.';
     crcSync();
-  }).catch(function () { $('crcMsg').textContent = '사진을 열 수 없습니다. 다시 찍어 주세요.'; });
+  }).catch(function () { $('crcMsg').textContent = pdf ? 'PDF를 열 수 없습니다. 다른 파일을 고르거나 사진으로 찍어 주세요.' : '사진을 열 수 없습니다. 다시 찍어 주세요.'; });
+}
+/** PDF 첫 쪽 → 캔버스 (pdf.js는 쓸 때만 불러옴, e-싸인 PDF 서명지와 같은 버전) */
+var PDFJS_CAR = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/';
+function pdfFirstPage(file) {
+  var lib = window.pdfjsLib ? Promise.resolve() : new Promise(function (ok, no) {
+    var s = document.createElement('script'); s.src = PDFJS_CAR + 'pdf.min.js'; s.onload = ok;
+    s.onerror = function () { s.remove(); no(new Error('pdf')); };
+    document.head.appendChild(s);
+  });
+  return lib.then(function () {
+    var L = window.pdfjsLib;
+    if (!L.GlobalWorkerOptions.workerSrc) L.GlobalWorkerOptions.workerSrc = PDFJS_CAR + 'pdf.worker.min.js';
+    return file.arrayBuffer().then(function (buf) { return L.getDocument({ data: new Uint8Array(buf), isEvalSupported: false }).promise; });
+  }).then(function (doc) { return doc.getPage(1); }).then(function (page) {
+    var v0 = page.getViewport({ scale: 1 }), vp = page.getViewport({ scale: Math.min(3, 1400 / v0.width) });
+    var c = document.createElement('canvas'); c.width = Math.round(vp.width); c.height = Math.round(vp.height);
+    var g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);   // 투명 배경 → 흰색
+    return page.render({ canvasContext: g, viewport: vp }).promise.then(function () { return c; });
+  });
 }
 $('crcFile').addEventListener('change', crcFileChange);
 $('crcFile2').addEventListener('change', crcFileChange);
