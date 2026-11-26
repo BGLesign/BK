@@ -192,9 +192,13 @@
       }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
     } catch (x) { fin({ err: '위치 오류' }); }
   }
+  var rfRid = '';                                  // 요청 번호: 응답이 끊겨 다시 눌러도 같은 번호 → 서버가 이미 등록된 같은 요청이면 성공으로 돌려줌 (성공하면 새로 만듦, 메모리에만)
+  function newRid() { try { var a = new Uint8Array(12); crypto.getRandomValues(a); return [].map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); } catch (x) { return String(Date.now()) + Math.random().toString(16).slice(2, 10); } }
   function sendRefund(vals, loc) {
     msg($('rfMsg'), '등록 중…', '#6b7686');
+    if (!rfRid) rfRid = newRid();
     srv().withSuccessHandler(function (r) {
+      rfRid = '';
       $('rfOk').disabled = false; msg($('rfMsg'), '');
       $('doneWho').textContent = r.name;
       $('doneMsg').textContent = r.title + ' — 환불 등록이 완료되었습니다.';
@@ -203,7 +207,7 @@
       $('rfOk').disabled = false;
       if (rfDirect && /QR을 다시 찍어/.test(errText(err))) { rfExpire(); return; }
       msg($('rfMsg'), errText(err), '#c0392b');
-    }).submitRefund({ eduId: rfEdu.id, values: vals, consent: true, consentVer: (rfEdu.form || {}).consentVer || '',
+    }).submitRefund({ rid: rfRid, eduId: rfEdu.id, values: vals, consent: true, consentVer: (rfEdu.form || {}).consentVer || '',
       locConsent: !!loc, locVer: (rfEdu.form || {}).locVer || '', loc: loc || null, accConsent: $('rfAccOn').checked, accVer: (rfEdu.form || {}).accVer || '', device: devInfo, dev: devTok, direct: rfDirect, enter: rfDirect ? rfEnter : '', token: !rfDirect && staff && staff.token || '' });
   }
   $('rfBack').onclick = function () { resetAll(); };

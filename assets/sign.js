@@ -87,6 +87,16 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     adminGradeSet: '데이터 저장 중', adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
   };
   function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock|St(Code|Imgs|Qr))|staffStImgs|staff(SetOpen|RfExtend)|emp(Change|Register)$|safetyLeaderCancel)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
+  /* 제출이 몰려 서버 잠금 대기(40초)를 넘기면 '몰려 있습니다' 오류가 옴 → 0.5~3초 무작위 간격으로 자동으로 다시 보냄 (같은 값·같은 요청 번호).
+   * 처음 보낸 뒤 50초가 지나면 더 보내지 않음 (전체 약 90초 안: 오래 기다리게 하지 않고, 기다리는 실행이 구글 동시 실행 자리를 오래 차지하지 않게). 그 밖의 오류는 그대로 */
+  var RETRY_FNS = { submitRefund: 1, submitSignature: 1, pdfSign: 1 }, RETRY_WINDOW = 50000;
+  function apiRetry(k, args, t0) {
+    return api(k, args).catch(function (e) {
+      if (!RETRY_FNS[k] || Date.now() - t0 > RETRY_WINDOW || !/몰려 있습니다/.test(errText(e))) throw e;
+      if (BUSY.el) BUSY.el.querySelector('b').textContent = '접수 중입니다. 잠시만 기다려 주세요';
+      return new Promise(function (res) { setTimeout(res, 500 + Math.random() * 2500); }).then(function () { return apiRetry(k, args, t0); });
+    });
+  }
   function srv() { return runner(null, null); }
   function runner(ok, fail) {
       return new Proxy({}, { get: function (_, k) {
@@ -95,7 +105,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
         if (typeof k !== 'string') return undefined;
         return function () {
           var off = BUSY_SKIP[k] ? function () {} : busyOn(busyText(k));
-          api(k, [].slice.call(arguments)).then(function (d) { try { if (ok) ok(d); } finally { off(); } }, function (e) { try { if (fail) fail(e); } finally { off(); } });   // 처리 뒤에 끔: 이어서 부르는 호출이 있으면 로딩창이 꺼지지 않고 한 번만
+          apiRetry(k, [].slice.call(arguments), Date.now()).then(function (d) { try { if (ok) ok(d); } finally { off(); } }, function (e) { try { if (fail) fail(e); } finally { off(); } });   // 처리 뒤에 끔: 이어서 부르는 호출이 있으면 로딩창이 꺼지지 않고 한 번만
         };
       } });
   }
@@ -1581,9 +1591,13 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       }, { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 });
     } catch (x) { fin({ err: '위치 오류' }); }
   }
+  var rfRid = '';                                  // 요청 번호: 응답이 끊겨 다시 눌러도 같은 번호 → 서버가 이미 등록된 같은 요청이면 성공으로 돌려줌 (성공하면 새로 만듦, 메모리에만)
+  function newRid() { try { var a = new Uint8Array(12); crypto.getRandomValues(a); return [].map.call(a, function (b) { return ('0' + b.toString(16)).slice(-2); }).join(''); } catch (x) { return String(Date.now()) + Math.random().toString(16).slice(2, 10); } }
   function sendRefund(vals, loc) {
     msg($('rfMsg'), '등록 중…', '#6b7686');
+    if (!rfRid) rfRid = newRid();
     srv().withSuccessHandler(function (r) {
+      rfRid = '';
       $('rfOk').disabled = false; msg($('rfMsg'), '');
       $('doneWho').textContent = r.name;
       $('doneMsg').textContent = r.title + ' — 환불 등록이 완료되었습니다.';
@@ -1592,7 +1606,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       $('rfOk').disabled = false;
       if (rfDirect && /QR을 다시 찍어/.test(errText(err))) { rfExpire(); return; }
       msg($('rfMsg'), errText(err), '#c0392b');
-    }).submitRefund({ eduId: rfEdu.id, values: vals, consent: true, consentVer: (rfEdu.form || {}).consentVer || '',
+    }).submitRefund({ rid: rfRid, eduId: rfEdu.id, values: vals, consent: true, consentVer: (rfEdu.form || {}).consentVer || '',
       locConsent: !!loc, locVer: (rfEdu.form || {}).locVer || '', loc: loc || null, accConsent: $('rfAccOn').checked, accVer: (rfEdu.form || {}).accVer || '', device: devInfo, dev: devTok, direct: rfDirect, enter: rfDirect ? rfEnter : '', token: !rfDirect && staff && staff.token || '' });
   }
   $('rfBack').onclick = function () { resetAll(); };
