@@ -1059,7 +1059,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
 
   /* ---------- 개인정보 변경: 직원DB의 메일로 받은 인증 코드를 입력해야 열림 ---------- */
   $('chgHead').onclick = function () { $('chgCard').classList.toggle('open'); };
-  var chgTicket = '';
+  var chgTicket = '', chgInfo = null;
   $('chgMailSend').onclick = function () {
     $('chgForm').classList.add('hidden'); chgTicket = '';
     $('chgMailSend').disabled = true; msg($('chgMsg'), '보내는 중…', '#6b7686');
@@ -1075,7 +1075,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     $('chgCodeOk').disabled = true; msg($('chgMsg'), '확인 중…', '#6b7686');
     srv().withSuccessHandler(function (r) {
       $('chgCodeOk').disabled = false; msg($('chgMsg'), '');
-      chgTicket = r.ticket; $('chgCodeRow').classList.add('hidden');
+      chgTicket = r.ticket; chgInfo = r.info; $('chgCodeRow').classList.add('hidden');
       $('chgName').value = r.info.name; $('chgPinShow').value = r.info.pin; $('chgDept').value = r.info.dept; $('chgTeam').value = r.info.team || ''; $('chgPost').value = r.info.post; $('chgRank').value = r.info.rank;
       $('chgForm').classList.remove('hidden');
     }).withFailureHandler(function (e) {
@@ -1084,13 +1084,17 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   };
   $('chgSend').onclick = function () {
     if (!chgTicket) return;
+    var sp = function (v) { return String(v || '').replace(/\s+/g, ''); };
+    var moved = chgInfo && (sp($('chgDept').value) !== sp(chgInfo.dept) || sp($('chgTeam').value) !== sp(chgInfo.team));
+    var lvNow = Number(staff && staff.lv) || 0;   // 3등급은 전체 범위라 해제 안 됨
+    if (moved && lvNow > 0 && lvNow < 3 && !confirm('부서나 팀을 바꾸면 관리자 권한이 해제됩니다. 바꾼 부서에서 다시 관리자로 지정받아야 합니다. 계속할까요?')) return;
     $('chgSend').disabled = true; msg($('chgMsg'), '저장 중…', '#6b7686');
     srv().withSuccessHandler(function (r) {
-      $('chgSend').disabled = false; chgTicket = ''; $('chgForm').classList.add('hidden');
+      $('chgSend').disabled = false; chgTicket = ''; chgInfo = null; $('chgForm').classList.add('hidden');
       $('chgMailSend').textContent = '메일로 인증 코드 받기';
-      setStaff({ token: staff.token, name: r.name, disp: r.disp, admin: staff.admin, lv: staff.lv });
+      setStaff({ token: staff.token, name: r.name, disp: r.disp, admin: 'admin' in r ? !!r.admin : staff.admin, lv: 'lv' in r ? Number(r.lv) || 0 : staff.lv });
       enterList(); refreshInit();
-      msg($('chgMsg'), '개인정보를 변경했습니다.', '#12833b');
+      msg($('chgMsg'), r.dropped ? '개인정보를 변경했습니다. 부서·팀이 바뀌어 관리자 권한이 해제되었습니다.' : '개인정보를 변경했습니다.', '#12833b');
     }).withFailureHandler(function (e) {
       $('chgSend').disabled = false; msg($('chgMsg'), errText(e), '#c0392b');
     }).empChange({ token: staff && staff.token || '', ticket: chgTicket, name: $('chgName').value, dept: $('chgDept').value, team: $('chgTeam').value, post: $('chgPost').value, rank: $('chgRank').value });
@@ -3116,7 +3120,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       $('pcReset').disabled = true;
       admCall('adminPcLookup', [v], function (d) {
         $('pcReset').disabled = false; pcStep = 1;
-        pcArmNext(d.label + ' 님을 초기화할까요? 개인 코드와 직원DB 정보가 삭제되고 메일 인증으로 다시 등록해야 합니다. 한 번 더 누르면 실행됩니다.');
+        pcArmNext(d.label + ' 님을 초기화할까요? 개인 코드와 직원DB 정보가 삭제되고' + (d.admin ? ' 관리자 권한도 해제되며,' : '') + ' 메일 인증으로 다시 등록해야 합니다. 한 번 더 누르면 실행됩니다.');
       }, $('pcMsg'), function () { $('pcReset').disabled = false; });
       return;
     }

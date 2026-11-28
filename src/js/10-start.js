@@ -17,7 +17,7 @@
       $('pcReset').disabled = true;
       admCall('adminPcLookup', [v], function (d) {
         $('pcReset').disabled = false; pcStep = 1;
-        pcArmNext(d.label + ' 님을 초기화할까요? 개인 코드와 직원DB 정보가 삭제되고 메일 인증으로 다시 등록해야 합니다. 한 번 더 누르면 실행됩니다.');
+        pcArmNext(d.label + ' 님을 초기화할까요? 개인 코드와 직원DB 정보가 삭제되고' + (d.admin ? ' 관리자 권한도 해제되며,' : '') + ' 메일 인증으로 다시 등록해야 합니다. 한 번 더 누르면 실행됩니다.');
       }, $('pcMsg'), function () { $('pcReset').disabled = false; });
       return;
     }
