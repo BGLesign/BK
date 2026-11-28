@@ -1654,7 +1654,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   function rosterEd(box, onChange) {
     var ed = { dir: [], by: {}, list: [], roles: {}, names: [], sel: '', withRole: true, signed: {}, rosterNote: '' };
     box.innerHTML = '<div class="reRoleSec"><div class="reRoles"></div>' +
-      '<div class="codeRow reRoleAdd"><input type="text" maxlength="40" autocomplete="off" placeholder="역할 이름 (예: 현장지휘)" enterkeyhint="done"><button type="button" class="btn gray sbtn">역할 추가</button></div>' +
+      '<div class="codeRow reRoleAdd"><input type="text" maxlength="300" autocomplete="off" placeholder="역할 이름 (여러 개는 쉼표로: 현장지휘, 안내)" enterkeyhint="done"><button type="button" class="btn gray sbtn">역할 추가</button></div>' +
       '<div class="note reRoleHint">역할 단추를 누른 뒤 아래 이름을 누르면 그 역할이 붙고, 한 번 더 누르면 빠집니다. 한 사람에 역할 여러 개를 붙일 수 있습니다.</div></div>' +
       '<div class="reHead"><b>명단</b> <span class="hint reCnt"></span></div>' +
       '<div class="slist reList"></div>' +
@@ -1662,13 +1662,14 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       '<div class="note reMiss"></div>';
     var q = function (s) { return box.querySelector(s); };
     var changed = function () { draw(); if (onChange) onChange(); };
+    /** 역할 추가: 쉼표·줄바꿈으로 여러 개를 한 번에 ('현장지휘, 안내, 통제') → 첫 역할이 골라진 상태 */
     function addRoleName() {
-      var inp = q('.reRoleAdd input'), v = inp.value.replace(/\s+/g, ' ').trim();
-      if (!v) { inp.focus(); return; }
-      if (/[,，]/.test(v)) { msg(q('.reMiss'), '역할 이름에는 쉼표를 쓸 수 없습니다. 역할을 하나씩 추가하세요.', '#c0392b'); return; }
-      if (/^[=+\-@]/.test(v)) { msg(q('.reMiss'), '역할 이름 맨 앞에 = + - @ 기호는 쓸 수 없습니다.', '#c0392b'); return; }
-      if (ed.names.indexOf(v) < 0) ed.names.push(v);
-      ed.sel = v; inp.value = ''; changed();
+      var inp = q('.reRoleAdd input'), vs = inp.value.split(/[,，\n]/).map(function (x) { return x.replace(/\s+/g, ' ').trim(); }).filter(Boolean);
+      if (!vs.length) { inp.focus(); return; }
+      var bad = vs.filter(function (v) { return /^[=+\-@]/.test(v); });
+      if (bad.length) { msg(q('.reMiss'), '역할 이름 맨 앞에 = + - @ 기호는 쓸 수 없습니다: ' + bad.join(', '), '#c0392b'); return; }
+      vs.forEach(function (v) { if (ed.names.indexOf(v) < 0) ed.names.push(v); });
+      ed.sel = vs[0]; inp.value = ''; changed();
     }
     q('.reRoleAdd button').onclick = addRoleName;
     q('.reRoleAdd input').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); addRoleName(); } });
