@@ -31,38 +31,6 @@
     if (on && isAdm() && !admData) admEnsure(function () {}, $('nMsg'));   // 관리자: 양식 목록은 펼칠 때 받음
   };
 
-  /* 명단 지정: 동명이인을 부서·직책·직급·이름·사번으로 보여 주고 고르기
-     (역할 칸 양식은 줄마다 한 명 g.one, 그 밖에는 이름마다 여러 명 가능) */
-  function drawRosterPick(list) {
-    var box = $('nPick'); box.innerHTML = ''; box.classList.remove('hidden');
-    list.forEach(function (g) {
-      var t = document.createElement('b'); t.textContent = g.one ? g.name : g.name + ' ' + g.people.length + '명'; box.appendChild(t);
-      g.people.forEach(function (p) {
-        var l = document.createElement('label'), c = document.createElement('input'), s = document.createElement('span');
-        c.type = g.one ? 'radio' : 'checkbox'; c.name = 'pk_' + g.key; c.setAttribute('data-g', g.key); c.value = p.pin;
-        s.textContent = [p.dept, p.post, p.rank, p.name, p.pin].filter(Boolean).join(' · ');
-        l.appendChild(c); l.appendChild(s); box.appendChild(l);
-      });
-    });
-  }
-  /** 고른 동명이인 { 이름: [사번] }. 고르는 칸이 없으면 null, 안 고른 이름이 있으면 false */
-  function rosterPick() {
-    var box = $('nPick'); if (box.classList.contains('hidden')) return null;
-    var out = {}, ok = true;
-    [].forEach.call(box.querySelectorAll('input'), function (c) { var k = c.getAttribute('data-g'); out[k] = out[k] || []; if (c.checked) out[k].push(c.value); });
-    Object.keys(out).forEach(function (k) { if (!out[k].length) ok = false; });
-    return ok ? out : false;
-  }
-  /** 두 줄에서 같은 사람(사번)을 고른 경우 그 이름 */
-  function pickTwice() {
-    var seen = {}, hit = '';
-    [].forEach.call($('nPick').querySelectorAll('input[type=radio]:checked'), function (c) {
-      if (seen[c.value] && !hit) hit = c.nextSibling.textContent; seen[c.value] = 1;
-    });
-    return hit;
-  }
-  $('nRoster').addEventListener('input', function () { $('nPick').classList.add('hidden'); $('nPick').innerHTML = ''; });
-
   $('nCreate').onclick = function () {
     if ($('nTpl').value === PDF_TPL) { puOpen(); return; }   // PDF 서명지: PDF 올리는 화면
     if (!admData) { admEnsure(function () { nTplUi(); }, $('nMsg')); return; }
@@ -77,18 +45,15 @@
     }
     var qrMin = rfNew ? rfMinVal() : '';
     if (rfNew && !(qrMin >= 1 && qrMin <= 600)) { msg($('nMsg'), 'QR 접수 시간은 1~600분으로 정해 주세요.', '#c0392b'); $('nRfMin').focus(); return; }
-    var rosterNew = !rfNew && !$('nGuest').checked && $('nUseRoster').checked;
-    if (rosterNew && !$('nRoster').value.trim()) { msg($('nMsg'), '명단에 이름을 입력하세요.', '#c0392b'); $('nRoster').focus(); return; }
-    var pick = rosterPick();
-    if (pick === false) { msg($('nMsg'), '동명이인을 골라 주세요.', '#c0392b'); return; }
-    if (pick && pickTwice()) { msg($('nMsg'), '같은 사람을 두 줄에서 골랐습니다: ' + pickTwice(), '#c0392b'); return; }
+    var rosterNew = !rfNew && !$('nGuest').checked;   // 직원 서명지는 명단(부서·팀 인원 자동 + 추가·빼기)에 있는 사람만
+    if (rosterNew && !nDir) { nEdInit(); msg($('nMsg'), '직원 목록을 불러오는 중입니다. 잠시 뒤 다시 누르세요.', '#324eb3'); return; }
+    var people = rosterNew ? nEd.get() : null;
+    if (rosterNew && !people.length) { msg($('nMsg'), '명단이 비어 있습니다. 부서·팀을 고르거나 이름으로 추가하세요.', '#c0392b'); return; }
     $('nCreate').disabled = true;
     var guestNew = !rfNew && $('nGuest').checked;   // 외부인 서명지: 서명자가 칸을 직접 입력
-    admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: rfNew ? '' : $('nTitle').value, dept: dept, team: dept.length === 1 && !$('nTeamRow').classList.contains('hidden') ? mselVal($('nTeam')) : [], date: rfNew ? '' : $('nDate').value, code: rfNew ? '' : $('nCode').value, qrMin: qrMin, guest: guestNew, useRoster: rosterNew, roster: rosterNew ? $('nRoster').value : '', rosterPick: rosterNew ? pick : null }], function (d) {
+    admCall('adminCreateEdu', [{ tpl: $('nTpl').value, title: rfNew ? '' : $('nTitle').value, dept: dept, team: dept.length === 1 && !$('nTeamRow').classList.contains('hidden') ? mselVal($('nTeam')) : [], date: rfNew ? '' : $('nDate').value, code: rfNew ? '' : $('nCode').value, qrMin: qrMin, guest: guestNew, people: people }], function (d) {
       $('nCreate').disabled = false;
-      if (d.rosterChoice) { drawRosterPick(d.rosterChoice); msg($('nMsg'), '같은 이름의 직원이 있습니다. 서명할 사람을 고른 뒤 다시 누르세요.', '#324eb3'); return; }
-      $('nPick').classList.add('hidden'); $('nPick').innerHTML = '';
-      if (!rfNew) { $('nTitle').value = ''; $('nCode').value = ''; $('nRoster').value = ''; $('nUseRoster').checked = false; $('nGuest').checked = false; $('nDept')._v = null; }
+      if (!rfNew) { $('nTitle').value = ''; $('nCode').value = ''; $('nGuest').checked = false; $('nDept')._v = null; nAdd = {}; nDel = {}; if (nEd) nEd.set([]); }
       $('newCard').classList.remove('open');   // 교육을 연 뒤에는 접음
       edTab = 'open'; renderAdmin(d);
     }, $('nMsg'), function () { $('nCreate').disabled = false; });   // 실패하면 바로 다시 누를 수 있게
@@ -127,7 +92,7 @@
       '<div class="ordSec"><div style="margin-top:12px"><b>서명자 순서</b> <span class="hint">(마감 후에도 순서 변경 가능)</span></div>' +
       '<div class="row"><button class="btn gray b-order"></button></div></div>' +
       '</div></div>' +
-      '<div class="roleBox"><div style="margin-top:12px"><b>임무·역할</b></div>' +
+      '<div class="roleBox"><div style="margin-top:12px"><b class="roleTitle">임무·역할</b></div>' +
       '<div class="row"><button class="btn gray b-role"></button></div></div>' +
       '<div class="rosterSec hidden"><div style="margin-top:12px"><b>아직 서명 안 한 사람</b></div><div class="hint rosterLeft" style="margin-top:4px"></div></div>' +
       '<div class="expSec"><div style="margin-top:12px"><b class="expTitle">PDF · 로그</b></div>' +
@@ -198,9 +163,10 @@
     q('.b-order').textContent = '서명자 순서 보기 · 수정 (' + e.signers.length + '명)';
     q('.b-order').disabled = !e.signers.length;
     q('.b-order').onclick = function () { openOrder(e.id); };
-    q('.b-role').textContent = '임무·역할 지정 (' + e.assigned + '명)';
+    q('.roleTitle').textContent = e.roster ? '명단 · 임무·역할' : '임무·역할';
+    q('.b-role').textContent = e.roster ? '명단 ' + e.roster + '명' + (e.hasRole ? ' · 역할 ' + e.assigned + '명' : '') + ' 보기 · 수정' : '임무·역할 지정 (' + e.assigned + '명)';
     q('.b-role').onclick = function () { openRoles(e.id); };
-    q('.roleBox').classList.toggle('hidden', mode === 'exp' || !e.hasRole || !!e.guest || !!e.refund);
+    q('.roleBox').classList.toggle('hidden', mode === 'exp' || !(e.hasRole || e.roster) || !!e.guest || !!e.refund);
     // 비상(환불 등록): 접속 코드·서명자 순서 없음
     q('.codeSec').classList.toggle('hidden', !!e.refund); q('.ordSec').classList.toggle('hidden', !!e.refund);
     q('.b-pdf').classList.toggle('hidden', !!e.refund); q('.b-html').classList.toggle('hidden', !!e.refund);

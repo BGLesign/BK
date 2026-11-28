@@ -158,12 +158,12 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       if (edu && code && ['sp', 's2', 's3'].indexOf(curScreen) > -1) { st.edu = edu; st.code = code; st.name = $('name').value; st.gd = $('gDept').value; st.gr = $('gRank').value; st.go = $('gRole').value; st.gn = $('gNoteIn').value; }
       if (curScreen === 's2' && person) { st.person = JSON.parse(JSON.stringify(person));
         st.strokes = strokes; st.vw = vw; st.vh = vh; st.drawn = drawn; }
-      if (curScreen === 's3') st.done = { who: $('doneWho').textContent, msg: $('doneMsg').textContent };
+      if (curScreen === 's3') st.done = { who: $('doneWho').textContent, msg: $('doneMsg').textContent, role: $('doneRole').classList.contains('hidden') ? '' : $('doneRole').querySelector('b').textContent };
       if (rfEdu && (curScreen === 'sf' || curScreen === 's3')) { st.rf = rfEdu.id; st.rfd = rfDirect; st.re = rfEnter; st.rz = rfEnd; }          // 환불 등록: 어느 등록인지만 (입력값·연락처는 저장 안 함)
       if (isAdm()) {                 // 관리자: 고치던 순서·임무역할 화면 (새로고침해도 이어서)
         st.admTok = 1; st.admOrder = admOrder; st.admMe = admMe;
         if (curScreen === 'so') st.ordId = ordId;
-        if (curScreen === 'sr' && rData) st.r = { id: rData.id, assign: rAssign, head: $('rHead').value };
+        if (curScreen === 'sr' && rData && rEd) st.r = { id: rData.id, list: rEd.get() };
       }
       sessionStorage.setItem(KEEP, JSON.stringify(st));
     } catch (x) {}
@@ -179,9 +179,8 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
         admEnsure(function () {
           if (st.s === 'so') { if (ordEduById(st.ordId)) openOrder(st.ordId); return; }
           admCall('adminRoleData', [st.r.id], function (rd) {
-            loadRoleData(rd);
-            rAssign = st.r.assign || rAssign; $('rHead').value = st.r.head != null ? st.r.head : $('rHead').value;
-            drawRoles(); show('sr');
+            loadRoleData(rd, st.r.list);
+            $('rSave').disabled = rState() === rOrig; show('sr');
           });
         });
         return;
@@ -190,7 +189,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     if (st.rf) {                     // 환불 등록 화면이었으면 그 등록 화면으로 (입력값은 다시)
       var rfe = edus.filter(function (x) { return x.id === st.rf && x.refund; })[0];
       rfDirect = !!st.rfd; rfEnter = st.re || ''; rfEnd = Number(st.rz) || 0;
-      if (rfe && st.s === 's3' && st.done) { rfEdu = rfe; $('doneWho').textContent = st.done.who; $('doneMsg').textContent = st.done.msg; show('s3'); return; }
+      if (rfe && st.s === 's3' && st.done) { rfEdu = rfe; $('doneWho').textContent = st.done.who; $('doneMsg').textContent = st.done.msg; $('doneRole').classList.add('hidden'); show('s3'); return; }
       if (rfe && rfe.open !== false) { openRefund(rfe); return; }
       rfDirect = false; resetAll();                  // 직원 대리 등록 화면은 목록을 다시 받아 처음부터
       return;
@@ -213,7 +212,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       redraw(); $('submit').disabled = drawn < 6;
       return;
     }
-    if (st.s === 's3' && st.done) { $('doneWho').textContent = st.done.who; $('doneMsg').textContent = st.done.msg; show('s3'); return; }
+    if (st.s === 's3' && st.done) { $('doneWho').textContent = st.done.who; $('doneMsg').textContent = st.done.msg; $('doneRole').classList.toggle('hidden', !st.done.role); $('doneRole').querySelector('b').textContent = st.done.role || ''; show('s3'); return; }
     if (edu.guest) show('sp'); else enterList();
   }
   function msg(el, text, color) {

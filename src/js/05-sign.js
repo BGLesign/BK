@@ -263,7 +263,8 @@
     msg($('msg2'), '제출 중…', '#6b7686');
     var run = srv().withSuccessHandler(function (res) {
       $('doneWho').textContent = ((res.disp ? res.disp + ' ' : '') + res.name).trim();
-      $('doneMsg').textContent = res.title + (res.role ? ' · ' + res.role : '') + ' — ' + (res.resigned ? '재서명이 정상적으로 제출되었습니다.' : '서명이 정상적으로 제출되었습니다.') + (res.done ? ' 모든 서명자가 서명을 마쳤습니다.' : '');
+      $('doneRole').classList.toggle('hidden', !res.role); $('doneRole').querySelector('b').textContent = res.role || '';
+      $('doneMsg').textContent = res.title + ' — ' + (res.resigned ? '재서명이 정상적으로 제출되었습니다.' : '서명이 정상적으로 제출되었습니다.') + (res.done ? ' 모든 서명자가 서명을 마쳤습니다.' : '');
       person = null; unlockPad();
       show('s3');
     }).withFailureHandler(function (e) {

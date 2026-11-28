@@ -201,7 +201,7 @@
       rfRid = '';
       $('rfOk').disabled = false; msg($('rfMsg'), '');
       $('doneWho').textContent = r.name;
-      $('doneMsg').textContent = r.title + ' — 환불 등록이 완료되었습니다.';
+      $('doneMsg').textContent = r.title + ' — 환불 등록이 완료되었습니다.'; $('doneRole').classList.add('hidden');
       show('s3');
     }).withFailureHandler(function (err) {
       $('rfOk').disabled = false;

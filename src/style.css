@@ -438,3 +438,23 @@
   .puNo { position:absolute; right:4px; bottom:4px; font-size:11px; color:#fff; background:rgba(0,0,0,.45); border-radius:4px; padding:0 5px; }
   .puCount { font-size:14px; font-weight:700; margin-bottom:8px; }
   .pvBar { position:sticky; bottom:8px; z-index:5; box-shadow:0 -2px 12px rgba(0,0,0,.08); }
+
+  /* 명단·임무역할 편집기 (새 서명지 열기·명단 화면) */
+  .rosterEd .reRoles { display:flex; flex-wrap:wrap; gap:6px; margin:4px 0 6px; }
+  .rosterEd .reRole { border:1px solid #c9d8fb; background:#fff; color:var(--pri); border-radius:20px; padding:5px 12px; font-size:14px; font-weight:700; cursor:pointer; }
+  .rosterEd .reRole.on { background:var(--pri); color:#fff; border-color:var(--pri); }
+  .rosterEd .reRoleDel { border:0; background:none; color:#c0392b; font-size:13px; text-decoration:underline; cursor:pointer; padding:5px 4px; }
+  .rosterEd .reHead { margin-top:12px; }
+  .rosterEd .reRow { cursor:default; }
+  .rosterEd .reRow.tap { cursor:pointer; }
+  .rosterEd .reRow .rl { display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end; }
+  .rosterEd .reTag { background:#eef3ff; color:var(--pri); border:1px solid #c9d8fb; border-radius:12px; padding:1px 8px; font-size:12px; font-weight:700; }
+  .rosterEd .reTag.on { background:var(--pri); color:#fff; }
+  .rosterEd .reAdd { margin-top:8px; }
+  .rosterEd .reSug { display:flex; flex-direction:column; gap:4px; margin-top:4px; }
+  .rosterEd .reSugItem { text-align:left; border:1px solid #dfe3ea; background:#fff; border-radius:8px; padding:8px 10px; font-size:14px; cursor:pointer; }
+  .roleBig { margin:12px auto 4px; max-width:320px; background:#eef3ff; border:1px solid #c9d8fb; border-radius:12px; padding:12px; color:var(--pri); }
+  .roleBig small { display:block; font-size:13px; }
+  .roleBig b { display:block; font-size:22px; margin:2px 0; word-break:keep-all; }
+  .roleBig span { display:block; font-size:13px; color:var(--sub); }
+  .person .myRole { display:block; font-size:14px; font-weight:700; color:var(--pri); margin-top:2px; }

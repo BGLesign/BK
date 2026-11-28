@@ -46,98 +46,144 @@
     return String(d.getFullYear()).slice(2) + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) + ' (' + w + ')';
   }
 
-  /* ---------- 임무·역할 지정 화면 ---------- */
-  var rData = null, rAssign = {}, rOrig = '', rLeave = false;
-  function rState() { return JSON.stringify([rAssign, $('rHead').value.trim()]); }
-  function rPeople(k) { return rData.people.filter(function (p) { return p.key === k; })[0]; }
+  /* ---------- 명단·임무역할 편집기 (새 서명지 열기·연 뒤 명단·임무역할 화면이 같이 씀) ----------
+     역할 단추를 누른 뒤 이름을 누르면 그 역할이 붙고, 다시 누르면 빠짐 (한 사람에 여러 개). 이름 옆 ✕ = 명단에서 빼기, 아래 칸 = 이름으로 사람 추가 */
+  function normO(s) { return String(s || '').replace(/[\s()（）]/g, '').toLowerCase(); }
+  function rosterEd(box, onChange) {
+    var ed = { dir: [], by: {}, list: [], roles: {}, names: [], sel: '', withRole: true, signed: {}, rosterNote: '' };
+    box.innerHTML = '<div class="reRoleSec"><div class="reRoles"></div>' +
+      '<div class="codeRow reRoleAdd"><input type="text" maxlength="40" autocomplete="off" placeholder="역할 이름 (예: 현장지휘)" enterkeyhint="done"><button type="button" class="btn gray sbtn">역할 추가</button></div>' +
+      '<div class="note reRoleHint">역할 단추를 누른 뒤 아래 이름을 누르면 그 역할이 붙고, 한 번 더 누르면 빠집니다. 한 사람에 역할 여러 개를 붙일 수 있습니다.</div></div>' +
+      '<div class="reHead"><b>명단</b> <span class="hint reCnt"></span></div>' +
+      '<div class="slist reList"></div>' +
+      '<div class="reAdd"><input type="text" autocomplete="off" placeholder="이름으로 사람 추가 (다른 팀·부서도)"><div class="reSug"></div></div>' +
+      '<div class="note reMiss"></div>';
+    var q = function (s) { return box.querySelector(s); };
+    var changed = function () { draw(); if (onChange) onChange(); };
+    function addRoleName() {
+      var inp = q('.reRoleAdd input'), v = inp.value.replace(/\s+/g, ' ').trim();
+      if (!v) { inp.focus(); return; }
+      if (/[,，]/.test(v)) { msg(q('.reMiss'), '역할 이름에는 쉼표를 쓸 수 없습니다. 역할을 하나씩 추가하세요.', '#c0392b'); return; }
+      if (/^[=+\-@]/.test(v)) { msg(q('.reMiss'), '역할 이름 맨 앞에 = + - @ 기호는 쓸 수 없습니다.', '#c0392b'); return; }
+      if (ed.names.indexOf(v) < 0) ed.names.push(v);
+      ed.sel = v; inp.value = ''; changed();
+    }
+    q('.reRoleAdd button').onclick = addRoleName;
+    q('.reRoleAdd input').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); addRoleName(); } });
+    var sug = q('.reSug'), sin = q('.reAdd input');
+    sin.addEventListener('input', drawSug);
+    function drawSug() {
+      var t = normO(sin.value); sug.innerHTML = '';
+      if (!t) return;
+      var on = {}; ed.list.forEach(function (k) { on[k] = 1; });
+      var hit = ed.dir.filter(function (p) { return !on[p.key] && normO(p.name).indexOf(t) > -1; }).slice(0, 8);
+      if (!hit.length) { sug.innerHTML = '<div class="hint">찾는 직원이 없습니다 (이미 명단에 있거나 직원DB에 없음)</div>'; return; }
+      hit.forEach(function (p) {
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'reSugItem';
+        b.textContent = p.name + ' · ' + [p.disp, p.dept, p.team].filter(Boolean).join(' · ');
+        b.onclick = function () { ed.list.push(p.key); if (ed.onAdd) ed.onAdd(p.key); sin.value = ''; sug.innerHTML = ''; changed(); };
+        sug.appendChild(b);
+      });
+    }
+    function draw() {
+      var rs = q('.reRoles'); rs.innerHTML = '';
+      ed.names.forEach(function (n) {
+        var c = document.createElement('button'); c.type = 'button'; c.className = 'reRole' + (n === ed.sel ? ' on' : '');
+        var cnt = ed.list.filter(function (k) { return (ed.roles[k] || []).indexOf(n) > -1; }).length;
+        c.textContent = n + ' ' + cnt;
+        c.onclick = function () { ed.sel = ed.sel === n ? '' : n; draw(); };
+        rs.appendChild(c);
+        if (n === ed.sel) {
+          var x = document.createElement('button'); x.type = 'button'; x.className = 'reRoleDel'; x.textContent = '역할 지우기';
+          x.onclick = function () {
+            if (cnt && x.getAttribute('data-arm') !== '1') { x.setAttribute('data-arm', '1'); x.textContent = cnt + '명에게서 빠짐 · 한 번 더'; return; }
+            ed.names = ed.names.filter(function (m) { return m !== n; });
+            Object.keys(ed.roles).forEach(function (k) { ed.roles[k] = ed.roles[k].filter(function (m) { return m !== n; }); });
+            ed.sel = ''; changed();
+          };
+          rs.appendChild(x);
+        }
+      });
+      q('.reRoleSec').classList.toggle('hidden', !ed.withRole);
+      var box2 = q('.reList'); box2.innerHTML = '';
+      if (!ed.list.length) box2.innerHTML = '<div class="srow"><span class="hint">명단이 비어 있습니다. 부서·팀을 고르거나 아래에서 이름으로 추가하세요.</span></div>';
+      ed.list.forEach(function (k) {
+        var p = ed.by[k] || { name: '(직원DB에 없음)', disp: '' }, row = document.createElement('div');
+        row.className = 'srow reRow' + (ed.withRole && ed.sel ? ' tap' : '');
+        row.innerHTML = '<span class="nm"><small></small><span></span><span class="st"></span></span><span class="rl"></span><button type="button" class="x" title="명단에서 빼기">✕</button>';
+        row.querySelector('small').textContent = p.disp || '';
+        row.querySelector('.nm span').textContent = p.name;
+        row.querySelector('.st').textContent = ed.signed[k] ? '서명함' : '';
+        var rl = row.querySelector('.rl');
+        (ed.withRole ? ed.roles[k] || [] : []).forEach(function (r) { var t = document.createElement('span'); t.className = 'reTag' + (r === ed.sel ? ' on' : ''); t.textContent = r; rl.appendChild(t); });
+        row.onclick = function (ev) {
+          if (ev.target.classList.contains('x')) return;
+          if (!ed.withRole) return;
+          if (!ed.sel) { msg(q('.reMiss'), ed.names.length ? '위에서 역할 단추를 먼저 누르세요.' : '먼저 역할 이름을 입력하고 [역할 추가]를 누르세요.', '#324eb3'); return; }
+          var a = ed.roles[k] = (ed.roles[k] || []).slice(), i = a.indexOf(ed.sel);
+          if (i > -1) a.splice(i, 1); else a.push(ed.sel);
+          changed();
+        };
+        row.querySelector('.x').onclick = function () { ed.list = ed.list.filter(function (x) { return x !== k; }); if (ed.onDel) ed.onDel(k); changed(); };
+        box2.appendChild(row);
+      });
+      var none = ed.withRole ? ed.list.filter(function (k) { return !(ed.roles[k] || []).length; }).length : 0;
+      q('.reCnt').textContent = ed.list.length + '명' + (ed.withRole && ed.list.length ? ' · 역할 없음 ' + none + '명' : '');
+      msg(q('.reMiss'), ed.rosterNote || '', '#6b7686');
+      drawSug();
+    }
+    ed.setDir = function (d) { ed.dir = d || []; ed.by = {}; ed.dir.forEach(function (p) { ed.by[p.key] = p; }); draw(); };
+    /** list: [{ key, role: [..] }] */
+    ed.set = function (list) {
+      ed.list = []; ed.roles = {}; ed.names = []; ed.sel = '';
+      (list || []).forEach(function (x) { if (ed.list.indexOf(x.key) < 0) ed.list.push(x.key); ed.roles[x.key] = (x.role || []).slice();
+        ed.roles[x.key].forEach(function (r) { if (ed.names.indexOf(r) < 0) ed.names.push(r); }); });
+      draw();
+    };
+    /** 명단만 바꿈 (역할은 사번별로 남겨 둠) */
+    ed.setKeys = function (keys) { ed.list = keys.slice(); draw(); };
+    ed.get = function () { return ed.list.map(function (k) { return { key: k, role: ed.withRole ? (ed.roles[k] || []).slice() : [] }; }); };
+    ed.role = function (on) { ed.withRole = !!on; if (!on) ed.sel = ''; draw(); };
+    ed.draw = draw;
+    draw();
+    return ed;
+  }
+
+  /* ---------- 명단·임무역할 화면 (서명지를 연 뒤: 명단 추가·빼기, 역할 단추 → 이름 누르기) ---------- */
+  var rData = null, rOrig = '', rLeave = false, rDrop = null, rEd = null;
+  function rState() { return JSON.stringify(rEd.get()); }
+  function rChanged() { rLeave = false; rDrop = null; $('rSave').disabled = rState() === rOrig; saveState(); }
   function openRoles(id) {
     admCall('adminRoleData', [id], function (d) { loadRoleData(d); admOverHide(true); show('sr'); }, admOverMsgEl());
   }
-  function loadRoleData(d) {
-    rData = d; rAssign = {}; rLeave = false;
-    d.assign.forEach(function (a) { rAssign[a.key] = a.role; });
+  function loadRoleData(d, list) {
+    rData = d; rLeave = false; rDrop = null;
+    if (!rEd) rEd = rosterEd($('rEd'), rChanged);
     $('rTitle').textContent = d.title;
     $('rNoCol').classList.toggle('hidden', d.hasRoleCol);
-    $('rHeadCard').classList.toggle('hidden', !d.hasRoleCol);
-    $('rHead').value = d.head || ''; $('rHeadAt').textContent = d.headAt ? '· ' + d.headAt + ' 칸' : '';
-    var sel = $('rFrom'); sel.innerHTML = '';
-    var o0 = document.createElement('option'); o0.value = ''; o0.textContent = '다른 서명지의 지정 불러오기…'; sel.appendChild(o0);
-    d.others.forEach(function (x) {
-      var o = document.createElement('option'); o.value = x.id;
-      o.textContent = x.title + (x.date ? ' (' + x.date + ')' : '') + ' · 지정 ' + x.count + '명';
-      sel.appendChild(o);
-    });
-    $('rFromRow').classList.toggle('hidden', !d.others.length);
-    $('rPaste').value = ''; msg($('rMsg'), '');
+    rEd.rosterNote = d.hasRoster ? '명단에서 빼면 그 사람에게 서명지가 보이지 않습니다. 이미 서명한 사람을 빼면 저장할 때 한 번 더 확인합니다.'
+      : '명단 없이 연 서명지(대상 부서 전체)입니다. 여기에 넣은 사람은 임무·역할만 정해지고, 서명지는 지금처럼 대상 부서 모두에게 보입니다.';
+    rEd.signed = {}; d.signed.forEach(function (k) { rEd.signed[k] = 1; });
+    rEd.withRole = d.hasRoleCol || !d.hasRoster;
+    rEd.setDir(d.people); rEd.set(d.list);
     rOrig = rState();
-    drawRoles();
-  }
-  function drawRoles() {
-    var box = $('rList'); box.innerHTML = '';
-    var signed = {}; rData.assign.forEach(function (a) { if (a.signed) signed[a.key] = 1; });
-    var e = admData.educations.filter(function (x) { return x.id === rData.id; })[0];
-    if (e) e.signers.forEach(function (s) { signed[s.key] = 1; });
-    var idx = {}; rData.people.forEach(function (p, i) { if (!(p.key in idx)) idx[p.key] = i; });
-    var keys = Object.keys(rAssign).sort(function (a, b) { return (a in idx ? idx[a] : 1e9) - (b in idx ? idx[b] : 1e9); });
-    if (!keys.length) box.innerHTML = '<div class="srow"><span class="hint">지정한 사람이 없습니다. 위에 붙여넣고 적용하세요.</span></div>';
-    keys.forEach(function (k) {
-      var p = rPeople(k) || { name: '(직원DB에 없음)', disp: '' }, row = document.createElement('div'); row.className = 'srow rrow';
-      row.innerHTML = '<span class="nm"><small></small><span></span><span class="st"></span></span><span class="rl"></span><button class="x" title="지정 해제">✕</button>';
-      row.querySelector('small').textContent = p.disp || '';
-      row.querySelector('.nm span').textContent = p.name;
-      row.querySelector('.st').textContent = signed[k] ? '서명함' : '';
-      row.querySelector('.rl').textContent = rAssign[k];
-      row.querySelector('.x').onclick = function () { delete rAssign[k]; rLeave = false; drawRoles(); };
-      box.appendChild(row);
-    });
-    $('rCount').textContent = '· ' + keys.length + '명 지정';
+    if (list) rEd.set(list);
+    msg($('rMsg'), '');
     $('rSave').disabled = rState() === rOrig;
-    saveState();
   }
-  $('rHead').addEventListener('input', function () { rLeave = false; $('rSave').disabled = rState() === rOrig; saveState(); });
-  $('rApply').onclick = function () {
-    var bad = [], n = 0;
-    $('rPaste').value.split('\n').forEach(function (line) {
-      var t = line.trim().split(/\s+/).filter(Boolean);
-      if (!t.length) return;
-      var clean = function (tok) { return tok.replace(/^[,·:;\-]+|[,·:;\-]+$/g, ''); };
-      var hit = null, nameAt = -1;
-      t.forEach(function (tok, i) {
-        if (hit) return;
-        var c = rData.people.filter(function (p) { return p.name === clean(tok); });
-        if (!c.length) return;
-        if (c.length > 1) c = c.filter(function (p) { return t.slice(0, i).map(clean).indexOf(p.disp) > -1; });
-        if (c.length === 1) { hit = c[0]; nameAt = i; }
-      });
-      if (!hit) { bad.push(line.trim()); return; }
-      // 이름 뒤에 적은 글자를 쉼표·띄어쓰기 그대로 사용 (이름 앞에 직책만 적은 경우도 허용)
-      var role = t.slice(nameAt + 1).join(' ').replace(/^[\s,·:;\-]+/, '').trim();
-      if (!role) {
-        var before = t.slice(0, nameAt).filter(function (tok) { return clean(tok) !== hit.disp; });
-        role = before.join(' ').replace(/[\s,·:;\-]+$/, '').trim();
-      }
-      if (!role) { bad.push(line.trim()); return; }
-      rAssign[hit.key] = role; n++;
-    });
-    rLeave = false; drawRoles();
-    msg($('rMsg'), n + '명 적용' + (bad.length ? ' · 찾지 못한 줄(동명이인은 직책도 적기): ' + bad.join(' / ') : '') + (n ? ' · 저장해야 반영됩니다.' : ''),
-      bad.length ? '#c0392b' : '#12833b');
-    if (!bad.length) $('rPaste').value = '';
-  };
-  $('rLoad').onclick = function () {
-    var x = rData.others.filter(function (o) { return o.id === $('rFrom').value; })[0];
-    if (!x) return;
-    var n = 0;
-    Object.keys(x.assign).forEach(function (k) { if (rPeople(k)) { rAssign[k] = x.assign[k]; n++; } });
-    rLeave = false; drawRoles();
-    msg($('rMsg'), x.title + '의 지정 ' + n + '명을 불러왔습니다. 저장해야 반영됩니다.', '#12833b');
-  };
   $('rSave').onclick = function () {
+    var p = { people: rEd.get() };
+    if (rDrop) p.dropSigned = rDrop;
     $('rSave').disabled = true;
-    admCall('adminSetRoles', [rData.id, rData.hasRoleCol && $('rHead').value.trim() !== (rData.head || '') ? { assign: rAssign, head: $('rHead').value } : { assign: rAssign }], function (r) {
+    admCall('adminSetRoster', [rData.id, p], function (r) {
+      if (r.confirm) {
+        rDrop = r.confirm.map(function (x) { return x.key; }); $('rSave').disabled = false;
+        msg($('rMsg'), '이미 서명한 사람을 명단에서 뺐습니다: ' + r.confirm.map(function (x) { return x.name; }).join(', ') + '. 한 번 더 [저장]을 누르면 그 서명은 무효가 되고 PDF에서 빠집니다.', '#c0392b');
+        return;
+      }
       renderAdmin(r.data); loadRoleData(r.roleData);
       msg($('rMsg'), r.data.note, '#12833b');
-    }, $('rMsg'));
+    }, $('rMsg'), function () { $('rSave').disabled = false; });
   };
   $('rBack').onclick = function () {
     if (rState() !== rOrig && !rLeave) {
@@ -285,15 +331,15 @@
   }
   function mselVal(el) { return (el._v || []).slice(); }
   /** 부서명·팀 칸: 직원DB의 부서명에서 여러 개 고름. 팀은 부서를 하나만 골랐을 때 그 부서의 팀에서 (아니면 팀 칸 숨김) */
-  function deptTeamSel(deptEl, teamEl, teamRow, dept, team) {
+  function deptTeamSel(deptEl, teamEl, teamRow, dept, team, onchg) {
     var orgs = (admData && admData.orgs) || [];
     var teamsOf = function (d) { var o = orgs.filter(function (x) { return x.dept === d; })[0]; return o ? o.teams : []; };
     var drawTeam = function (tv) {
       var ds = mselVal(deptEl), one = ds.length === 1;
       teamRow.classList.toggle('noTeam', !one);
-      msel(teamEl, one ? teamsOf(ds[0]) : [], one ? tv : []);
+      msel(teamEl, one ? teamsOf(ds[0]) : [], one ? tv : [], onchg);
     };
-    msel(deptEl, orgs.map(function (x) { return x.dept; }), orgSplit(dept), function () { drawTeam([]); });
+    msel(deptEl, orgs.map(function (x) { return x.dept; }), orgSplit(dept), function () { drawTeam([]); if (onchg) onchg(); });
     drawTeam(orgSplit(team));
   }
 
@@ -318,10 +364,7 @@
     }
     var rf = isRfTpl(sel.value);
     var gNew = $('nGuest').checked, roleT = tplHasRole(sel.value);
-    $('nRoster').placeholder = roleT ? '한 줄에 한 명: 이름 임무·역할 (역할은 비워도 됨)\n예) 홍길동 현장지휘\n김철수 통제, 안내\n동명이인은 서명지를 열 때 고릅니다'
-      : '이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)\n예) 홍길동, 김철수, 이영희\n동명이인은 서명지를 열 때 고릅니다';
-    $('nRosterNote').textContent = '명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 명단은 서명지를 연 뒤에는 바꿀 수 없습니다.' +
-      (roleT ? ' 임무·역할은 연 뒤에도 [임무·역할 지정]에서 고칠 수 있습니다.' : '');
+    nEdInit(); if (nEd) nEd.role(roleT);
     $('nNoVerify').classList.toggle('hidden', !gNew);
     tplPreview($('nTplPrev'), sel.value); deptRow($('nDeptRow'), sel.value, gNew);
     if (rf) $('nDeptRow').classList.add('hidden');
@@ -329,11 +372,36 @@
     $('nKindRow').classList.toggle('hidden', rf); $('nCodeRow').classList.toggle('hidden', rf); $('nRfNote').classList.toggle('hidden', !rf); $('nRfMinRow').classList.toggle('hidden', !rf);
     $('nTitleRow').classList.toggle('hidden', rf); $('nDateRow').classList.toggle('hidden', rf);   // 비상: 제목·날짜 자동
     $('nCreate').textContent = rf ? '환불 등록 열기' : '서명지 열기';
-    $('nRosterRow').classList.toggle('hidden', rf || gNew);   // 명단 지정은 직원 서명지만 (외부인 서명지는 없음)
-    $('nRosterBox').classList.toggle('hidden', rf || gNew || !$('nUseRoster').checked);
+    $('nRosterBox').classList.toggle('hidden', rf || gNew);   // 명단은 직원 서명지만 (외부인 서명지는 없음)
+    nRefill();
   }
-  $('nTpl').onchange = function () { $('nPick').classList.add('hidden'); $('nPick').innerHTML = ''; nTplUi(); };   // 양식이 바뀌면 명단 읽는 방식도 바뀜 → 동명이인 고르기 다시
-  $('nUseRoster').onchange = nTplUi; $('nGuest').onchange = nTplUi;
+  /* 새 서명지 명단: 대상 부서·팀 인원이 자동으로 들어감 (+ 이름으로 추가·✕ 빼기, 부서·팀을 바꿔도 직접 넣고 뺀 것은 남음) */
+  var nEd = null, nDir = null, nDirWait = false, nAdd = {}, nDel = {};
+  function nEdInit() {
+    if (!nEd) {
+      nEd = rosterEd($('nEd'), null);
+      nEd.onAdd = function (k) { nAdd[k] = 1; delete nDel[k]; };
+      nEd.onDel = function (k) { nDel[k] = 1; delete nAdd[k]; };
+      nEd.rosterNote = '명단에 있는 사람에게만 서명지가 보입니다. 서명지를 연 뒤에도 [명단 · 임무·역할]에서 추가·뺄 수 있습니다.';
+    }
+    if (nDir || nDirWait || !isAdm() || !admData) return;
+    nDirWait = true;
+    srv().withSuccessHandler(function (d) { nDirWait = false; nDir = d.people || []; nEd.setDir(nDir); nRefill(); })
+      .withFailureHandler(function (x) { nDirWait = false; msg($('nMsg'), errText(x), '#c0392b'); }).adminStaffDir(staff.token);
+  }
+  function nRefill() {
+    if (!nEd || !nDir) return;
+    var ds = $('nDeptRow').classList.contains('hidden') ? [] : mselVal($('nDept')).map(normO), ts = ds.length === 1 ? mselVal($('nTeam')).map(normO) : [];
+    nEd.setKeys(nDir.filter(function (p) {
+      if (nDel[p.key]) return false;
+      if (nAdd[p.key] || !ds.length) return true;   // 부서 [전체] = 모든 직원
+      var pd = normO(p.dept);
+      return ds.some(function (d) { return pd === d ? !ts.length || ts.indexOf(normO(p.team)) > -1 : !ts.length && normO(p.up) === d; });   // 본부를 고르면 아래 처까지
+    }).map(function (p) { return p.key; }));
+  }
+  function nEdReset() { nAdd = {}; nDel = {}; if (nEd) { nEd.set([]); nRefill(); } }
+  $('nTpl').onchange = nTplUi;   // 양식이 바뀌면 명단 읽는 방식도 바뀜 → 동명이인 고르기 다시
+  $('nGuest').onchange = nTplUi;
   /** 양식 고르는 칸: 관리자는 양식목록 중 내 등급으로 열 수 있는 양식('01. 이름') + [PDF 서명지], 그 밖의 직원은 [PDF 서명지]만 */
   function nTplFill(list) {
     var sel = $('nTpl'), prev = sel.value, had = sel.options.length > 1; sel.innerHTML = '';
@@ -362,9 +430,9 @@
     admData = d;
     if (d.me) admMe = d.me;
     var nFirst = !$('nDept')._v;   // 처음 그릴 때·서명지를 연 뒤에는 관리자의 부서명·팀, 그 밖에는 고른 값 유지
-    deptTeamSel($('nDept'), $('nTeam'), $('nTeamRow'), nFirst ? (admMe && admMe.dept) || '' : mselVal($('nDept')).join(', '), nFirst ? (admMe && admMe.team) || '' : mselVal($('nTeam')).join(', '));
+    deptTeamSel($('nDept'), $('nTeam'), $('nTeamRow'), nFirst ? (admMe && admMe.dept) || '' : mselVal($('nDept')).join(', '), nFirst ? (admMe && admMe.team) || '' : mselVal($('nTeam')).join(', '), nRefill);
     $('gstId').value = (d.guest && d.guest.id) || '';
-    nTplFill(d.templates);
+    nTplFill(d.templates); nRefill();
     if (!d.templates.length) msg($('nMsg'), '열 수 있는 양식이 없습니다. 시트의 양식목록 탭(열 수 있는 등급)을 확인하세요.', '#c0392b');
     if (!$('nDate').value) $('nDate').value = today();
     var note = d.note || ''; d.note = '';   // 안내는 한 번만

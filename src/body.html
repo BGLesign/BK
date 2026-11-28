@@ -102,17 +102,14 @@
     <div class="card hidden" id="newCard">
       <div class="nhead" id="nHead"><b>새 서명지 열기</b></div>
       <div class="nbody">
-      <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nGuest"> <b>외부인 서명지</b></label>
-        <label class="vchk" id="nRosterRow"><input type="checkbox" id="nUseRoster"> <b>명단 지정</b></label></div>
+      <div class="field" id="nKindRow"><div class="vRow"><label class="vchk"><input type="checkbox" id="nGuest"> <b>외부인 서명지</b></label></div>
         <div class="note hidden" id="nNoVerify">외부인 서명지: 직원 로그인 없이 서명자가 소속·직위·성명을 직접 입력합니다. 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field"><label>양식</label><select id="nTpl"></select><div class="tprev hidden" id="nTplPrev"></div></div>
-      <div class="field hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 서명지를 열 때 고릅니다"></textarea>
-        <div class="pickBox hidden" id="nPick"></div>
-        <div class="note" id="nRosterNote">명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
       <div class="field" id="nDeptRow"><label>대상 부서 <span class="hint">(서명하는 부서, 여러 개 고르기)</span></label><div class="msel" id="nDept"></div></div>
       <div class="field" id="nTeamRow"><label>팀 <span class="hint">(여러 개 고르기)</span></label><div class="msel" id="nTeam"></div></div>
-      <div class="note" id="nDeptNote">주관 부서(관리하는 부서)는 내 부서로 자동 정해지고, 마감·삭제 등 관리는 주관 부서 관리자가 합니다. 대상 부서는 다른 부서도 고를 수 있습니다. 고른 부서(팀)의 직원과 명단에 넣은 사람에게 서명지가 보입니다. 부서가 [전체]면 모든 직원에게 보입니다. 팀은 부서를 하나만 골랐을 때 고를 수 있습니다.</div>
+      <div class="note" id="nDeptNote">주관 부서(관리하는 부서)는 내 부서로 자동 정해지고, 마감·삭제 등 관리는 주관 부서 관리자가 합니다. 대상 부서는 다른 부서도 고를 수 있습니다. 고른 부서(팀)의 직원이 아래 명단에 자동으로 들어갑니다 (부서 [전체] = 모든 직원). 팀은 부서를 하나만 골랐을 때 고를 수 있습니다.</div>
+      <div class="field" id="nRosterBox"><label>명단 · 임무·역할</label><div class="rosterEd" id="nEd"></div></div>
       <div class="field" id="nDateRow"><label>날짜</label><input type="text" id="nDate" autocomplete="off"></div>
       <div class="field" id="nCodeRow"><label>접속 코드 (숫자 4자리, 서명지마다 다르게)</label><input type="text" id="nCode" placeholder="예: 1024" autocomplete="off" inputmode="numeric" maxlength="4" pattern="[0-9]*"></div>
       <div class="field hidden" id="nRfMinRow"><label>고객용 QR 접수 시간</label>
@@ -333,6 +330,7 @@
       <div class="check">✓</div>
       <div class="who" id="doneWho"></div>
       <div class="hint" id="doneMsg"></div>
+      <div class="roleBig hidden" id="doneRole"><small>내 임무·역할</small><b></b><span>교육·훈련 때 내 역할을 확인하세요</span></div>
       <div class="doneClose hidden" id="doneClose">이제 이 창을 닫으셔도 됩니다.</div>
       <div class="row" id="nextRow"><button class="btn pri" id="nextPerson">같은 서명지 · 다음 사람 서명</button></div>
       <div class="row" id="againRow"><button class="btn gray" id="again">서명지 목록 보기</button></div>
@@ -393,30 +391,14 @@
   <section id="sr" class="hidden">
     <div class="card">
       <div class="adm-top">
-        <span class="who">임무·역할 지정</span>
+        <span class="who">명단 · 임무·역할</span>
         <button class="btn gray sbtn" id="rBack">← 서명지 목록</button>
       </div>
       <div style="font-weight:700;font-size:16px;margin-top:8px" id="rTitle"></div>
       <div class="warn hidden" id="rNoCol">이 서명지의 양식에는 임무·역할 칸이 없어 서명지에는 들어가지 않습니다. (서명 화면과 로그에는 표시)</div>
     </div>
-    <div class="card" id="rHeadCard">
-      <b>머릿글</b> <span class="hint" id="rHeadAt"></span>
-      <input type="text" id="rHead" maxlength="30" autocomplete="off" placeholder="예: 임무, 역할">
-      <div class="note">서명지의 임무·역할 칸 제목입니다. 바꾸고 저장하면 이 서명지(모든 페이지)에 바로 반영됩니다. 양식은 그대로입니다.</div>
-    </div>
     <div class="card">
-      <b>여러 명 한 번에 붙여넣기</b>
-      <textarea id="rPaste" rows="6" placeholder="한 줄에 한 명: 이름 임무·역할&#10;예) 홍길동 현장지휘, 상황전파&#10;동명이인은 직책도: 대리 김철수 승객안내"></textarea>
-      <div class="note">이름 뒤에 적은 글자가 쉼표까지 그대로 임무·역할로 표시됩니다. 이미 지정된 사람을 다시 적으면 새 내용으로 바뀝니다.</div>
-      <div class="row"><button class="btn gray" id="rApply">붙여넣은 내용 적용</button></div>
-      <div class="codeRow" id="rFromRow">
-        <select id="rFrom"></select>
-        <button class="btn gray sbtn" id="rLoad">불러오기</button>
-      </div>
-    </div>
-    <div class="card">
-      <b>지정 현황</b> <span class="hint" id="rCount"></span>
-      <div class="slist" id="rList"></div>
+      <div class="rosterEd" id="rEd"></div>
     </div>
     <div class="card">
       <div class="row" style="margin-top:0"><button class="btn pri" id="rSave">저장</button></div>
