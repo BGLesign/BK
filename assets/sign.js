@@ -1652,10 +1652,10 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
      역할 단추를 누른 뒤 이름을 누르면 그 역할이 붙고, 다시 누르면 빠짐 (한 사람에 여러 개). 이름 옆 ✕ = 명단에서 빼기, 아래 칸 = 이름으로 사람 추가 */
   function normO(s) { return String(s || '').replace(/[\s()（）]/g, '').toLowerCase(); }
   function rosterEd(box, onChange) {
-    var ed = { dir: [], by: {}, list: [], roles: {}, names: [], sel: '', withRole: true, signed: {}, rosterNote: '' };
+    var ed = { dir: [], by: {}, list: [], roles: {}, names: [], sels: [], withRole: true, signed: {}, rosterNote: '' };
     box.innerHTML = '<div class="reRoleSec"><div class="reRoles"></div>' +
       '<div class="codeRow reRoleAdd"><input type="text" maxlength="300" autocomplete="off" placeholder="역할 이름 (여러 개는 쉼표로: 현장지휘, 안내)" enterkeyhint="done"><button type="button" class="btn gray sbtn">역할 추가</button></div>' +
-      '<div class="note reRoleHint">역할 단추를 누른 뒤 아래 이름을 누르면 그 역할이 붙고, 한 번 더 누르면 빠집니다. 한 사람에 역할 여러 개를 붙일 수 있습니다.</div></div>' +
+      '<div class="note reRoleHint">역할 단추를 켜고(여러 개 가능) 아래 이름을 누르면 켜진 역할이 모두 붙습니다. 빼려면 이름 옆 역할을 누릅니다.</div></div>' +
       '<div class="reHead"><b>명단</b> <span class="hint reCnt"></span></div>' +
       '<div class="slist reList"></div>' +
       '<div class="reAdd"><input type="text" autocomplete="off" placeholder="이름으로 사람 추가 (다른 팀·부서도)"><div class="reSug"></div></div>' +
@@ -1669,7 +1669,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       var bad = vs.filter(function (v) { return /^[=+\-@]/.test(v); });
       if (bad.length) { msg(q('.reMiss'), '역할 이름 맨 앞에 = + - @ 기호는 쓸 수 없습니다: ' + bad.join(', '), '#c0392b'); return; }
       vs.forEach(function (v) { if (ed.names.indexOf(v) < 0) ed.names.push(v); });
-      ed.sel = vs[0]; inp.value = ''; changed();
+      ed.sels = vs.slice(); inp.value = ''; changed();
     }
     q('.reRoleAdd button').onclick = addRoleName;
     q('.reRoleAdd input').addEventListener('keydown', function (ev) { if (ev.key === 'Enter') { ev.preventDefault(); addRoleName(); } });
@@ -1691,18 +1691,18 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     function draw() {
       var rs = q('.reRoles'); rs.innerHTML = '';
       ed.names.forEach(function (n) {
-        var c = document.createElement('button'); c.type = 'button'; c.className = 'reRole' + (n === ed.sel ? ' on' : '');
+        var c = document.createElement('button'); c.type = 'button'; c.className = 'reRole' + (ed.sels.indexOf(n) > -1 ? ' on' : '');
         var cnt = ed.list.filter(function (k) { return (ed.roles[k] || []).indexOf(n) > -1; }).length;
         c.textContent = n + ' ' + cnt;
-        c.onclick = function () { ed.sel = ed.sel === n ? '' : n; draw(); };
+        c.onclick = function () { var i = ed.sels.indexOf(n); if (i > -1) ed.sels.splice(i, 1); else ed.sels.push(n); draw(); };   // 단추 여러 개 켜기·끄기
         rs.appendChild(c);
-        if (n === ed.sel) {
+        if (ed.sels.length === 1 && ed.sels[0] === n) {   // 하나만 켰을 때 그 역할 지우기
           var x = document.createElement('button'); x.type = 'button'; x.className = 'reRoleDel'; x.textContent = '역할 지우기';
           x.onclick = function () {
             if (cnt && x.getAttribute('data-arm') !== '1') { x.setAttribute('data-arm', '1'); x.textContent = cnt + '명에게서 빠짐 · 한 번 더'; return; }
             ed.names = ed.names.filter(function (m) { return m !== n; });
             Object.keys(ed.roles).forEach(function (k) { ed.roles[k] = ed.roles[k].filter(function (m) { return m !== n; }); });
-            ed.sel = ''; changed();
+            ed.sels = []; changed();
           };
           rs.appendChild(x);
         }
@@ -1712,19 +1712,23 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       if (!ed.list.length) box2.innerHTML = '<div class="srow"><span class="hint">명단이 비어 있습니다. 부서·팀을 고르거나 아래에서 이름으로 추가하세요.</span></div>';
       ed.list.forEach(function (k) {
         var p = ed.by[k] || { name: '(직원DB에 없음)', disp: '' }, row = document.createElement('div');
-        row.className = 'srow reRow' + (ed.withRole && ed.sel ? ' tap' : '');
+        row.className = 'srow reRow' + (ed.withRole && ed.sels.length ? ' tap' : '');
         row.innerHTML = '<span class="nm"><small></small><span></span><span class="st"></span></span><span class="rl"></span><button type="button" class="x" title="명단에서 빼기">✕</button>';
         row.querySelector('small').textContent = p.disp || '';
         row.querySelector('.nm span').textContent = p.name;
         row.querySelector('.st').textContent = ed.signed[k] ? '서명함' : '';
         var rl = row.querySelector('.rl');
-        (ed.withRole ? ed.roles[k] || [] : []).forEach(function (r) { var t = document.createElement('span'); t.className = 'reTag' + (r === ed.sel ? ' on' : ''); t.textContent = r; rl.appendChild(t); });
+        (ed.withRole ? ed.roles[k] || [] : []).forEach(function (r) {   // 이름 옆 역할을 누르면 그 역할만 빠짐
+          var t = document.createElement('button'); t.type = 'button'; t.className = 'reTag' + (ed.sels.indexOf(r) > -1 ? ' on' : ''); t.textContent = r; t.title = '누르면 이 역할 빼기';
+          t.onclick = function (ev) { ev.stopPropagation(); ed.roles[k] = (ed.roles[k] || []).filter(function (m) { return m !== r; }); changed(); };
+          rl.appendChild(t);
+        });
         row.onclick = function (ev) {
           if (ev.target.classList.contains('x')) return;
           if (!ed.withRole) return;
-          if (!ed.sel) { msg(q('.reMiss'), ed.names.length ? '위에서 역할 단추를 먼저 누르세요.' : '먼저 역할 이름을 입력하고 [역할 추가]를 누르세요.', '#324eb3'); return; }
-          var a = ed.roles[k] = (ed.roles[k] || []).slice(), i = a.indexOf(ed.sel);
-          if (i > -1) a.splice(i, 1); else a.push(ed.sel);
+          if (!ed.sels.length) { msg(q('.reMiss'), ed.names.length ? '위에서 역할 단추를 먼저 누르세요.' : '먼저 역할 이름을 입력하고 [역할 추가]를 누르세요.', '#324eb3'); return; }
+          var a = ed.roles[k] = (ed.roles[k] || []).slice();   // 켜진 역할을 모두 붙임 (이미 있으면 그대로)
+          ed.sels.forEach(function (r) { if (a.indexOf(r) < 0) a.push(r); });
           changed();
         };
         row.querySelector('.x').onclick = function () { ed.list = ed.list.filter(function (x) { return x !== k; }); if (ed.onDel) ed.onDel(k); changed(); };
@@ -1738,7 +1742,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     ed.setDir = function (d) { ed.dir = d || []; ed.by = {}; ed.dir.forEach(function (p) { ed.by[p.key] = p; }); draw(); };
     /** list: [{ key, role: [..] }] */
     ed.set = function (list) {
-      ed.list = []; ed.roles = {}; ed.names = []; ed.sel = '';
+      ed.list = []; ed.roles = {}; ed.names = []; ed.sels = [];
       (list || []).forEach(function (x) { if (ed.list.indexOf(x.key) < 0) ed.list.push(x.key); ed.roles[x.key] = (x.role || []).slice();
         ed.roles[x.key].forEach(function (r) { if (ed.names.indexOf(r) < 0) ed.names.push(r); }); });
       draw();
@@ -1746,7 +1750,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     /** 명단만 바꿈 (역할은 사번별로 남겨 둠) */
     ed.setKeys = function (keys) { ed.list = keys.slice(); draw(); };
     ed.get = function () { return ed.list.map(function (k) { return { key: k, role: ed.withRole ? (ed.roles[k] || []).slice() : [] }; }); };
-    ed.role = function (on) { ed.withRole = !!on; if (!on) ed.sel = ''; draw(); };
+    ed.role = function (on) { ed.withRole = !!on; if (!on) ed.sels = []; draw(); };
     ed.draw = draw;
     draw();
     return ed;

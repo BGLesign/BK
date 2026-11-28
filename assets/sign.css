@@ -448,7 +448,7 @@
   .rosterEd .reRow { cursor:default; }
   .rosterEd .reRow.tap { cursor:pointer; }
   .rosterEd .reRow .rl { display:flex; flex-wrap:wrap; gap:4px; justify-content:flex-end; }
-  .rosterEd .reTag { background:#eef3ff; color:var(--pri); border:1px solid #c9d8fb; border-radius:12px; padding:1px 8px; font-size:12px; font-weight:700; }
+  .rosterEd .reTag { cursor:pointer; font-family:inherit; line-height:1.4; background:#eef3ff; color:var(--pri); border:1px solid #c9d8fb; border-radius:12px; padding:1px 8px; font-size:12px; font-weight:700; }
   .rosterEd .reTag.on { background:var(--pri); color:#fff; }
   .rosterEd .reAdd { margin-top:8px; }
   .rosterEd .reSug { display:flex; flex-direction:column; gap:4px; margin-top:4px; }
