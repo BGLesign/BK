@@ -91,14 +91,13 @@
   }
   function savedPin() { try { return localStorage.getItem('bglPin') || ''; } catch (x) { return ''; } }
   /** 로그인 2시간이 지나면 첫 화면(사번·개인 코드)으로. 서명 칸 화면·제출 중이면 제출이 끝날 때까지 기다림 */
-  function signingNow() { return curScreen === 's2' || submitting || (curScreen === 'sk' && (skStep === 'sig' || skBusy)); }
+  function signingNow() { return curScreen === 's2' || submitting; }
   /** 자동 로그아웃: 마지막 동작(터치·입력·스크롤) 후 20분. 서명 칸 화면·제출 중이면 제출이 끝날 때까지 기다림 */
   function idleOver() { return !!(staff && staff.ttl && Date.now() - lastAct > staff.ttl * 1000); }
   function staffExpire() {
     if (!idleOver() || signingNow()) return;
     var mins = Math.round(staff.ttl / 60);
     landOff();
-    if (!$('skView').classList.contains('hidden')) { $('skView').classList.add('hidden'); document.body.classList.remove('skLock'); }
     ['qrOver', 'regOver'].forEach(function (id) { $(id).classList.add('hidden'); });
     logout(mins + '분 동안 사용하지 않아 자동으로 로그아웃되었습니다. 사번과 개인 코드를 다시 입력하세요.');
   }

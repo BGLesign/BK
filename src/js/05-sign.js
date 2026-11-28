@@ -96,7 +96,7 @@
     if (!LAND_OK) { t.textContent = '가로 화면으로 서명 가능'; return; }   // 아이폰 등: 휴대폰을 직접 돌리면 됨
     var b = document.createElement('button'); b.type = 'button';   // 누르면 화면이 가로로 돌아감 (회전 화살표 + 글자)
     b.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/></svg>가로로 돌리기';
-    b.onclick = function () { landOn(t.closest('#s2') ? $('msg2') : $('skMsg')); };
+    b.onclick = function () { landOn($('msg2')); };
     t.appendChild(b);
   });
 

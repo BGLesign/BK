@@ -109,10 +109,6 @@
       <div class="field hidden" id="nRosterBox"><textarea id="nRoster" rows="5" placeholder="이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)&#10;예) 홍길동, 김철수, 이영희&#10;동명이인은 서명지를 열 때 고릅니다"></textarea>
         <div class="pickBox hidden" id="nPick"></div>
         <div class="note" id="nRosterNote">명단에 넣은 사람도 이 서명지를 볼 수 있습니다. 이름은 서명한 순서대로 서명지에 들어갑니다. 직원DB에 있는 직원만 넣을 수 있고, 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
-      <div class="field hidden" id="nSkBox"><label>점검할 역</label>
-        <label class="vchk" style="margin-top:6px"><input type="checkbox" id="nSkAll" checked> <b>전체 선택</b></label>
-        <div class="skChecks" id="nSkList"></div>
-        <div class="note">안전점검: 제목은 "안전점검의 날 체크리스트"로 고정, 부서명은 서명지를 연 관리자의 부서(그 부서 직원에게만 보임), 접속 코드 없이 서명지 목록에 점검자·팀장 박스로 보입니다. 점검자는 역을 골라 입력하고 서명, 팀장(직책에 '팀장')은 역마다 확인하고 서명합니다. 역은 서명지를 연 뒤에는 바꿀 수 없습니다.</div></div>
       <div class="field" id="nTitleRow"><label id="nTitleLabel">교육명</label><input type="text" id="nTitle" placeholder="예: 4분기 비상대응 훈련" autocomplete="off"></div>
       <div class="field" id="nDeptRow"><label>대상 부서 <span class="hint">(서명하는 부서, 여러 개 고르기)</span></label><div class="msel" id="nDept"></div></div>
       <div class="field" id="nTeamRow"><label>팀 <span class="hint">(여러 개 고르기)</span></label><div class="msel" id="nTeam"></div></div>
@@ -427,55 +423,7 @@
       <div class="msg" id="rMsg"></div>
     </div>
   </section>
-  <!-- 안전점검의 날: 점검자 (역 선택 → 체크리스트 → 최종 확인 → 서명), 팀장 (역 선택 화면에서 진행 상황 → 일괄 서명) -->
-  <section id="sk" class="hidden">
-    <div class="card">
-      <div class="rfHead"><span class="skTag">안전점검의 날</span></div>
-      <div class="who" id="skTitle" style="margin-top:6px"></div>
-      <div class="edu" id="skDate"></div>
-      <div id="skPick">
-        <div class="hint">점검할 역을 고르세요. ✓ 표시는 점검자 서명이 끝난 역이고, 다시 고르면 고쳐서 다시 서명합니다. 팀장 확인까지 끝난 역은 수정할 수 없고 PDF를 받아 출력·보관할 수 있습니다.</div>
-        <div class="skGrid" id="skGrid"></div>
-        <div class="skLead hidden" id="skLead">
-          <div class="who">팀장 확인</div>
-          <div class="hint" id="skLeadSt"></div>
-          <div class="row"><button class="btn gray" id="skLeadView" type="button">역별 내용 보기</button><button class="btn pri" id="skLeadSign" type="button">일괄 서명</button></div>
-          <div class="row hidden" id="skLeadCRow"><button class="btn del" id="skLeadCancel" type="button">일괄 서명 취소</button></div>
-        </div>
-        <div class="row"><button class="btn gray" id="skHome" type="button">서명지 목록</button></div>
-      </div>
-      <div id="skForm" class="hidden">
-        <div class="who" id="skStName" style="margin-top:10px;color:var(--pri)"></div>
-        <div class="hint" id="skDefNote"></div>
-        <div id="skItems"></div>
-        <div class="row"><button class="btn gray" id="skFormBack" type="button">역 목록</button><button class="btn pri" id="skDone" type="button">완료</button></div>
-      </div>
-      <div id="skRev" class="hidden">
-        <div class="hint" style="margin-bottom:8px">입력한 내용을 확인하세요. 맞으면 [최종 확인]을 누르고 서명합니다.</div>
-        <div id="skPaperBox"></div>
-        <div class="row"><button class="btn gray" id="skRevBack" type="button">수정</button><button class="btn pri" id="skRevOk" type="button">최종 확인</button></div>
-      </div>
-      <div id="skSig" class="hidden">
-        <div class="whoRow"><div class="who" id="skSigName"></div><span class="lsTag"></span></div>
-        <div class="edu" id="skSigEdu"></div>
-        <div class="padarea">
-          <div class="padwrap"><canvas id="skPad"></canvas></div>
-          <div class="hint penHint hidden">와콤 펜: 판 전체가 이 서명 칸입니다 (버튼은 마우스로)</div>
-          <div class="actions">
-            <div class="row"><button class="btn gray" id="skClear" type="button">지우기</button><button class="btn gray" id="skSigBack" type="button">뒤로</button></div>
-            <div class="row sub"><button class="btn pri" id="skSend" type="button" disabled>다음</button></div>
-          </div>
-        </div>
-      </div>
-      <div class="msg" id="skMsg"></div>
-    </div>
-  </section>
 </main>
-<!-- 안전점검의 날: 팀장 내용 보기 (역마다 체크리스트, 이전·다음 역. 서명은 역 선택 화면의 [일괄 서명]) -->
-<div class="skView hidden" id="skView" role="dialog" aria-label="팀장 내용 보기">
-  <div class="lvTop"><button class="btn gray sbtn" id="lvClose" type="button">닫기</button><b id="lvTitle"></b><select id="lvSel" aria-label="역 바로 보기"></select><span id="lvProg"></span></div>
-  <div class="lvPage" id="lvPage"></div>
-</div>
 <!-- 접속 코드 (첫 화면에서 교육을 누르면 열림) -->
 <div class="qrOver hidden" id="codeOver" role="dialog" aria-label="접속 코드">
   <div class="qrBox admBox">

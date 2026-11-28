@@ -156,7 +156,6 @@
     var put = function (e, el) { box.appendChild(adm && !e.pdfSign || pdfSw(e) ? eswWrap(e, el) : el); };
     list.forEach(function (e) {
       if (e.refund) { put(e, rfItem(e)); return; }
-      if (e.safety) { put(e, skItem(e)); return; }
       if (e.pdfSign) { put(e, pdfItem(e)); return; }
       var closed = e.open === false;
       var pdfOk = closed && !!(staff && staff.token && !staff.guest);   // 마감된 서명지: 직원은 [PDF] 버튼만 눌러 받기 (카드는 안 눌림)

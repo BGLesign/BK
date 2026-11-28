@@ -81,12 +81,12 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     staffLogin: '로그인하는 중',
     enterCode: '확인하는 중', verifyPerson: '확인하는 중', empMailVerify: '확인하는 중', empChangeVerify: '확인하는 중', adminPcLookup: '확인하는 중',
     empMailSend: '메일 보내는 중', empChangeSend: '메일 보내는 중',
-    submitSignature: '서명 저장 중', pdfSign: '서명 저장 중', safetySubmit: '데이터 저장 중', safetyLeaderSubmit: '서명 저장 중', submitRefund: '데이터 저장 중',
+    submitSignature: '서명 저장 중', pdfSign: '서명 저장 중', submitRefund: '데이터 저장 중',
     adminCreateEdu: '서명지 만드는 중', pdfCreate: '서명지 만드는 중',
     staffDeleteEdu: '삭제하는 중', pdfDelete: '삭제하는 중', adminPcReset: '초기화하는 중',
-    adminGradeSet: '데이터 저장 중', adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중', safetyPdf: '파일 만드는 중'
+    adminGradeSet: '데이터 저장 중', adminExportPdf: '파일 만드는 중', adminExportLog: '파일 만드는 중', eduPdf: '파일 만드는 중'
   };
-  function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock|St(Code|Imgs|Qr))|staffStImgs|staff(SetOpen|RfExtend)|emp(Change|Register)$|safetyLeaderCancel)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
+  function busyText(k) { return BUSY_TEXT[k] || (/^(admin(Edit|Set|Reorder|Sort|Unlock|St(Code|Imgs|Qr))|staffStImgs|staff(SetOpen|RfExtend)|emp(Change|Register)$)/.test(k) ? '데이터 저장 중' : '데이터 불러오는 중'); }
   /* 제출이 몰려 서버 잠금 대기(40초)를 넘기면 '몰려 있습니다' 오류가 옴 → 0.5~3초 무작위 간격으로 자동으로 다시 보냄 (같은 값·같은 요청 번호).
    * 처음 보낸 뒤 50초가 지나면 더 보내지 않음 (전체 약 90초 안: 오래 기다리게 하지 않고, 기다리는 실행이 구글 동시 실행 자리를 오래 차지하지 않게). 그 밖의 오류는 그대로 */
   var RETRY_FNS = { submitRefund: 1, submitSignature: 1, pdfSign: 1 }, RETRY_WINDOW = 50000;
@@ -118,7 +118,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
   if (staff && (!staff.token || !staff.ttl || Date.now() - lastAct > staff.ttl * 1000)) staff = null;   // 예전 표시·마지막 동작 후 20분 지난 로그인
 
   function show(id) {
-    ['sl', 's1', 'sq', 'sp', 's2', 's3', 'sf', 'sx', 'so', 'sr', 'sk', 'su', 'sv'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
+    ['sl', 's1', 'sq', 'sp', 's2', 's3', 'sf', 'sx', 'so', 'sr', 'su', 'sv'].forEach(function (s) { $(s).classList.toggle('hidden', s !== id); });
     var flow = ['s1', 's2', 's3'], at = id === 'sp' ? 1 : flow.indexOf(id), adminScr = ['so', 'sr'].indexOf(id) > -1;
     document.body.setAttribute('data-s', id);
     $('hero').classList.toggle('hidden', id !== 's1' && id !== 'sl');
@@ -142,9 +142,7 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
     swAllowed = !!(swOn && (id === 's1' || id === 'sq') && staff && staff.token && !staff.guest);
     swLight(id === 'sq' ? 'kiosk' : 'sign');
     $('appSw').classList.toggle('hidden', !swOn); document.querySelector('header h1').classList.toggle('hidden', swOn);
-    document.documentElement.classList.toggle('noPull', id === 'sk');
-    if (id !== 'sk') document.body.classList.remove('skSig');
-    if (id !== 's2' && id !== 'sk') landOff();
+    if (id !== 's2') landOff();
     window.scrollTo(0, 0);
     if (id !== 'sq') DID_CAR = false;              // 차량관리에서 온 DID를 벗어나면 뒤로가기는 보통대로
     curScreen = id; saveState();
@@ -161,8 +159,6 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       if (curScreen === 's2' && person) { st.person = JSON.parse(JSON.stringify(person));
         st.strokes = strokes; st.vw = vw; st.vh = vh; st.drawn = drawn; }
       if (curScreen === 's3') st.done = { who: $('doneWho').textContent, msg: $('doneMsg').textContent };
-      if (curScreen === 'sk' && sk) { st.sk = sk.id; st.skSt = skStep !== 'pick' && skSigMode !== 'lead' && skSt ? skSt.st : ''; }
-      if (skL && !$('skView').classList.contains('hidden')) { st.skL = skL.id; st.skLi = skL.idx; }
       if (rfEdu && (curScreen === 'sf' || curScreen === 's3')) { st.rf = rfEdu.id; st.rfd = rfDirect; st.re = rfEnter; st.rz = rfEnd; }          // 환불 등록: 어느 등록인지만 (입력값·연락처는 저장 안 함)
       if (isAdm()) {                 // 관리자: 고치던 순서·임무역할 화면 (새로고침해도 이어서)
         st.admTok = 1; st.admOrder = admOrder; st.admMe = admMe;
@@ -205,8 +201,6 @@ appSwitch(document.getElementById('appSw'), { car: function () { CARAPP.go('?car
       return;
     }
     refreshInit(st.s === 'sq' || window.APP_CAR);   // DID·차량 화면으로 열었으면 목록은 뒤에서 조용히
-    if (st.skL) { enterList(); skOpen(st.skL); skLeadOpen(st.skL, st.skLi); return; }   // 팀장 내용 보기 중이었으면 그 역
-    if (st.s === 'sk' && st.sk) { enterList(); skOpen(st.sk, false, st.skSt); return; }
     if (st.s === 'sq') { kioskOpen(); return; }   // DID 화면이었으면
     if (!st.edu || !st.code) { enterList(); return; }
     edu = st.edu; code = st.code; selId = edu.id; renderEdus();

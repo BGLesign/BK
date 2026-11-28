@@ -155,7 +155,7 @@
     SPV.list = items; SPV.i = 0;
     $('stPrevImg').classList.toggle('cover', fit === 'cover');
     var was = $('stPrevOver').classList.contains('hidden');
-    $('stPrevOver').classList.remove('hidden'); document.body.classList.add('skLock');
+    $('stPrevOver').classList.remove('hidden'); document.body.classList.add('popLock');
     if (was) popPush();                    // 휴대폰 뒤로가기 = 미리보기 닫기
     pvShow();
   }
@@ -167,7 +167,7 @@
     $('stPrevCap').textContent = (SPV.i + 1) + ' / ' + SPV.list.length + ' · ' + (it.n || '이미지') + ' · ' + it.s + '초' + (w ? ' · ' + w : '') + (stLive(it) ? '' : ' (지금은 안 나옴)');
     SPV.t = setTimeout(function () { SPV.i = (SPV.i + 1) % SPV.list.length; pvShow(); }, Math.max(3, it.s) * 1000);
   }
-  function pvClose() { clearTimeout(SPV.t); $('stPrevOver').classList.add('hidden'); $('stPrevImg').removeAttribute('src'); document.body.classList.remove('skLock'); popSync(); }
+  function pvClose() { clearTimeout(SPV.t); $('stPrevOver').classList.add('hidden'); $('stPrevImg').removeAttribute('src'); document.body.classList.remove('popLock'); popSync(); }
   $('stPrevOver').onclick = function () { SPV.i = (SPV.i + 1) % SPV.list.length; pvShow(); };
   $('stPrevX').onclick = function (ev) { ev.stopPropagation(); pvClose(); };
   document.addEventListener('keydown', function (ev) { if (ev.key === 'Escape' && !$('stPrevOver').classList.contains('hidden')) pvClose(); });

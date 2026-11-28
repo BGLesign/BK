@@ -225,14 +225,6 @@
         hs.map(function (h) { return '<span>' + esc(h.t) + '</span>'; }).join('') + '</div>';
       return;
     }
-    if (t.safety) {                     // 안전점검 양식: 분야·항목·기본 수량 (역별 수량은 양식 탭 오른쪽 표)
-      var its = t.items || [];
-      box.innerHTML = '<div class="cap"><b>' + esc(name) + '</b> · 안전점검의 날 · 항목 ' + its.length + '개 · 수량은 역마다 다름</div><div class="wrap"><table class="skPrev"><colgroup><col style="width:22%"><col><col style="width:18%"></colgroup>' +
-        '<tr><th>점검분야</th><th>점검항목</th><th>기본 수량</th></tr>' +
-        its.slice(0, 3).map(function (it) { return '<tr><td>' + esc(it.f) + '</td><td class="l">' + esc(it.t) + '</td><td>' + esc(it.q || '-') + '</td></tr>'; }).join('') +   // 윗줄 3개만
-        (its.length > 3 ? '<tr><td class="more" colspan="3">⋮ 외 ' + (its.length - 3) + '개 항목</td></tr>' : '') + '</table></div>';
-      return;
-    }
     if (!t.cap) { box.innerHTML = '<div class="cap">서명 칸을 찾지 못한 양식입니다.</div>'; return; }
     var hasRole = t.blocks.some(function (b) { return b.heads.some(function (h) { return h.k === 'role'; }); });
     var rows = {}, order = [];
@@ -259,23 +251,6 @@
   }
 
   /** 고른 양식의 서명지에 부서 칸이 없으면(예: 양식3·4) 부서 입력칸 숨김 */
-  function isSkTpl(name) { var t = admData && admData.tplPrev && admData.tplPrev[name]; return !!(t && t.safety); }
-  /** 안전점검 날짜 기본값: 2026.10.06(화요일) */
-  function skToday() {
-    var d = new Date(), p = function (n) { return (n < 10 ? '0' : '') + n; };
-    return d.getFullYear() + '.' + p(d.getMonth() + 1) + '.' + p(d.getDate()) + '(' + '일월화수목금토'.charAt(d.getDay()) + '요일)';
-  }
-  function skChecks(name) {
-    var box = $('nSkList'), t = admData.tplPrev[name] || {};
-    if (box.children.length) return;
-    (t.stations || []).forEach(function (st) {
-      var l = document.createElement('label'), c = document.createElement('input'), sp = document.createElement('span');
-      c.type = 'checkbox'; c.checked = true; c.value = /역$/.test(st) ? st : st + '역'; sp.textContent = c.value;
-      c.onchange = function () { $('nSkAll').checked = ![].some.call(box.querySelectorAll('input'), function (x) { return !x.checked; }); };
-      l.appendChild(c); l.appendChild(sp); box.appendChild(l);
-    });
-  }
-  $('nSkAll').onchange = function () { [].forEach.call($('nSkList').querySelectorAll('input'), function (x) { x.checked = $('nSkAll').checked; }); };
   function isRfTpl(name) { var t = admData && admData.tplPrev && admData.tplPrev[name]; return !!(t && t.refund); }
   function tplHasRole(name) { var t = admData && admData.tplPrev && admData.tplPrev[name]; return !!(t && t.blocks && t.blocks.some(function (b) { return b.heads.some(function (h) { return h.k === 'role'; }); })); }
   function tplHasDept(name) { var t = admData && admData.tplPrev && admData.tplPrev[name]; return !t || t.hasDept !== false; }
@@ -337,14 +312,11 @@
     var sel = $('nTpl'), pdf = sel.value === PDF_TPL;
     $('nPdfNote').classList.toggle('hidden', !pdf);
     if (pdf) {
-      ['nKindRow', 'nRosterBox', 'nSkBox', 'nTitleRow', 'nDeptRow', 'nTeamRow', 'nDeptNote', 'nDateRow', 'nCodeRow', 'nRfMinRow', 'nRfNote', 'nNoVerify', 'nTplPrev'].forEach(function (id) { $(id).classList.add('hidden'); });
+      ['nKindRow', 'nRosterBox', 'nTitleRow', 'nDeptRow', 'nTeamRow', 'nDeptNote', 'nDateRow', 'nCodeRow', 'nRfMinRow', 'nRfNote', 'nNoVerify', 'nTplPrev'].forEach(function (id) { $(id).classList.add('hidden'); });
       $('nCreate').textContent = 'PDF 서명지 만들기';
       return;
     }
-    var rf = isRfTpl(sel.value), skT = isSkTpl(sel.value);
-    $('nSkBox').classList.toggle('hidden', !skT);
-    if (skT) { skChecks(sel.value); if (!$('nDate').value || $('nDate').value === today()) $('nDate').value = skToday(); }
-    else if ($('nDate').value === skToday()) $('nDate').value = today();
+    var rf = isRfTpl(sel.value);
     var gNew = $('nGuest').checked, roleT = tplHasRole(sel.value);
     $('nRoster').placeholder = roleT ? '한 줄에 한 명: 이름 임무·역할 (역할은 비워도 됨)\n예) 홍길동 현장지휘\n김철수 통제, 안내\n동명이인은 서명지를 열 때 고릅니다'
       : '이름을 한 번에 입력 (줄바꿈·쉼표·띄어쓰기로 구분)\n예) 홍길동, 김철수, 이영희\n동명이인은 서명지를 열 때 고릅니다';
@@ -359,10 +331,6 @@
     $('nCreate').textContent = rf ? '환불 등록 열기' : '서명지 열기';
     $('nRosterRow').classList.toggle('hidden', rf || gNew);   // 명단 지정은 직원 서명지만 (외부인 서명지는 없음)
     $('nRosterBox').classList.toggle('hidden', rf || gNew || !$('nUseRoster').checked);
-    if (skT) {                                   // 안전점검: 직원 로그인만, 명단·접속 코드 없음
-      $('nGuest').checked = false; $('nNoVerify').classList.add('hidden');
-      ['nKindRow', 'nCodeRow', 'nRosterBox', 'nTitleRow', 'nDeptRow', 'nTeamRow', 'nDeptNote'].forEach(function (id) { $(id).classList.add('hidden'); });   // 제목은 고정, 부서명은 연 관리자의 부서
-    }
   }
   $('nTpl').onchange = function () { $('nPick').classList.add('hidden'); $('nPick').innerHTML = ''; nTplUi(); };   // 양식이 바뀌면 명단 읽는 방식도 바뀜 → 동명이인 고르기 다시
   $('nUseRoster').onchange = nTplUi; $('nGuest').onchange = nTplUi;

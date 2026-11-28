@@ -152,17 +152,13 @@
     #s2 .card { padding:12px 14px; }
     #s2 .who { font-size:18px; }
     #s2 .warn { padding:6px 10px; font-size:13px; margin-top:6px; }
-    #s2 .padarea, #skSig .padarea { margin-top:8px; }
-    #s2 .actions, #skSig .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
-    #s2 .actions .row, #skSig .actions .row { display:contents; }
-    #s2 .actions .btn, #skSig .actions .btn { padding:13px 6px; font-size:16px; }
-    #s2 .actions #clear, #s2 .actions #back, #skSig .actions #skClear, #skSig .actions #skSigBack { flex:1; }
-    #s2 .actions #submit, #skSig .actions #skSend { flex:1.8; }
-    #s2 .actions .msg, #skSig .actions .msg { flex-basis:100%; margin-top:0; min-height:0; }
-    /* 안전점검 서명 칸(점검자·팀장 일괄 서명)도 교육 서명과 같게 */
-    body.skSig main { padding-top:8px; }
-    body.skSig #sk .card { padding:12px 14px; }
-    body.skSig #skSigName { font-size:18px; }
+    #s2 .padarea { margin-top:8px; }
+    #s2 .actions { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
+    #s2 .actions .row { display:contents; }
+    #s2 .actions .btn { padding:13px 6px; font-size:16px; }
+    #s2 .actions #clear, #s2 .actions #back { flex:1; }
+    #s2 .actions #submit { flex:1.8; }
+    #s2 .actions .msg { flex-basis:100%; margin-top:0; min-height:0; }
   }
   .edu { color:var(--sub); font-size:14px; margin-top:2px; }
   /* 관리자 화면 */
@@ -231,10 +227,9 @@
     .padwrap { flex:1; min-width:0; }
     /* 가로 모드 서명 칸: 예전보다 약 1.2배 (아래로 늘림). 위쪽 로고 줄은 서명 화면에서만 숨기고 이름·교육명은 한 줄로 */
     canvas { height:min(calc((100vh - 140px) * 1.2), calc(100vh - 92px)); height:min(calc((100dvh - 140px) * 1.2), calc(100dvh - 92px)); min-height:120px; }
-    body[data-s="s2"] header, body.skSig header { display:none; }
-    #s2 .whoRow, #skSig .whoRow { display:inline; }
-    #s2 .who, #skSig .who { display:inline; } #s2 .edu, #skSig .edu { display:inline; margin-left:8px; }
-    #skSig .who { font-size:16px; } #skSig .edu { font-size:12px; margin-top:0; }
+    body[data-s="s2"] header { display:none; }
+    #s2 .whoRow { display:inline; }
+    #s2 .who { display:inline; } #s2 .edu { display:inline; margin-left:8px; }
     .actions { width:150px; display:flex; flex-direction:column; gap:8px; }
     .actions .row { flex-direction:column; margin-top:0; }
     .actions .sub { order:-1; }
@@ -316,7 +311,6 @@
   .tprev .chips span { font-size:11px; color:#33405a; background:#fff; border:1px solid #c8cfdd; border-radius:6px; padding:2px 6px; }
   .tprev th, .tprev td { border:1px solid #c8cfdd; padding:2px 3px; text-align:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; height:15px; }
   .tprev th { background:#e9edf7; color:#33405a; font-weight:700; }
-  .tprev table.skPrev td { white-space:normal; height:auto; } .tprev table.skPrev td.l { text-align:left; } .tprev table.skPrev td.more { font-size:10px; padding:3px; }   /* 안전점검 항목은 줄바꿈 */
   .tprev th.k-role { background:#ffe7d4; color:#b54708; }
   .tprev th.k-sign { background:#dfe6fb; color:var(--pri2); }
   .tprev td.more { color:var(--sub); font-size:9px; height:11px; padding:0; }
@@ -413,78 +407,9 @@
   .ihead { margin-top:12px; }
   .ibox .ibody { margin:8px -12px 0; padding:2px 12px 12px; background:#f3f6fd; border-top:1.5px solid var(--pri); border-bottom:1.5px solid var(--pri); }   /* 펼치면 카드 좌우 끝까지 연한 파랑, 위아래 줄 (입력칸 폭은 그대로) */
   .gnote { margin-top:10px; background:#fff1e6; border:1px solid #f9c79c; color:#9a3d06; border-radius:10px; padding:8px 12px; font-size:14px; }
-  /* 안전점검의 날: 서명지 목록 카드 (누르면 역 선택 화면) */
-  .skItem { border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:12px; cursor:pointer; }
-  .skItem .skTop b { display:block; font-size:17px; margin-top:4px; }
-  .skItem .skTop .rank { color:var(--sub); font-size:14px; }
-  .skTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:var(--pri); border-radius:6px; padding:2px 7px; }
-  .skCnt { margin-top:8px; font-size:14px; } .skCnt strong { color:var(--pri); } .skCnt strong.done { color:var(--ok); }
-  .skGo { font-size:13px; color:var(--sub); margin-top:2px; }
-  .skItem.busy { opacity:.6; pointer-events:none; }
-  .skCell { display:flex; flex-direction:column; gap:4px; } .skCell > button:first-child { flex:1; }
   .pdfDl { font-size:13px; font-weight:600; color:#12833b; }   /* PDF 받음 표시 (누가·언제) */
-  .skPdfS.got { border-color:#12833b !important; color:#12833b; }
-  .skPdfS { border:1.5px solid var(--pri) !important; background:#fff !important; color:var(--pri); font-size:13px !important; font-weight:700; padding:7px 4px !important; border-radius:8px !important; }
-  .skPdfB { width:100%; margin-top:8px; padding:10px; border:1.5px solid var(--line); border-radius:12px; background:#fff; font-size:14px; font-weight:700; color:var(--pri); }
-  .skPdfB:disabled { color:#98a2b3; background:#f4f5f7; }
-  .skItem.closed { border-color:var(--line); background:#f4f5f7; color:#98a2b3; }
-  .skItem.closed .skCnt strong { color:#98a2b3; }
-  /* 역 선택 화면의 팀장 확인 (진행 상황 · 일괄 서명) */
-  .skLead { margin-top:12px; border:1.5px solid #9fb3ea; background:#f5f8ff; border-radius:12px; padding:10px 12px; }
-  .skLead .who { font-size:16px; color:var(--pri); }
   html { touch-action:manipulation; }   /* 휴대폰: 두 번 탭 확대 제스처 끔 → 첫 터치가 바로 버튼으로 */
-  html.noPull, html.noPull body { overscroll-behavior-y:none; }        /* 안전점검 화면: 당겨서 새로고침 끔 */
-  body.skSig #sk .rfHead, body.skSig #skTitle, body.skSig #skDate { display:none; }   /* 서명 단계: 교육 서명처럼 이름 줄 + 제목 한 줄만 */
-  .skGrid button.chk { border-color:#f0d58a; background:#fff3c4; } .skGrid button small.ck { color:#b45309; font-weight:700; }   /* 확인 필요한 역 */
-  /* 점검자 화면 */
-  .skGrid { display:grid; grid-template-columns:repeat(3, 1fr); gap:6px; margin-top:10px; }
-  .skGrid button { border:1.5px solid var(--line); background:#fff; border-radius:10px; padding:10px 4px; font-size:15px; font-weight:700; color:var(--text); line-height:1.3; }
-  .skGrid button small { display:block; font-size:12px; font-weight:400; color:var(--sub); }
-  .skGrid button.done { border-color:#bfe3cb; background:#eef8f1; } .skGrid button.done small { color:var(--ok); }
-  .skGrp { margin-top:14px; font-size:13px; font-weight:800; color:var(--pri2); border-bottom:1px solid var(--line); padding-bottom:4px; }
-  .skIt { padding:10px 0; border-bottom:1px dashed var(--line); }
-  .skH { display:flex; align-items:center; gap:8px; }
-  .skH .t { flex:1; min-width:0; font-size:15px; }
-  .skL { display:flex; align-items:center; gap:14px; margin-top:6px; }          /* 수량 칸 옆에 양호, 비고 칸 옆에 불량 (둘 중 하나만 체크) */
-  .skL .qi, .skL .ni { flex:1; width:auto !important; margin-top:0 !important; }
-  .skL label { flex:none; width:68px; display:flex; align-items:center; gap:4px; font-size:15px; font-weight:700; color:var(--text); cursor:pointer; white-space:nowrap; }
-  .skIt .skL label input { padding:0; width:24px; height:24px; margin:0; accent-color:var(--pri); flex:none; }
-  .skL label.on { color:var(--pri); } .skL label.x.on { color:#b42318; } .skL label.x input { accent-color:#c0392b; }
-  .skQ textarea.ni { width:100%; margin-top:6px; font-size:15px; padding:9px 10px; border:1px solid var(--line); border-radius:10px; font-family:inherit; line-height:1.4; resize:none; overflow:hidden; display:block; }
-  .skQ textarea.ni.fold { height:42px; white-space:pre; }                       /* 접힘: 한 줄만 보임 */
-  .skQ .nTog { align-self:flex-end; border:0; background:none; color:var(--pri); font-size:13px; font-weight:700; padding:4px 2px; }
-  .skIt.miss { background:#fff5f4; }
-  .skIt input { margin-top:6px; font-size:15px; padding:9px 10px; }
-  #sk textarea { width:100%; font-size:15px; padding:10px; border:1px solid var(--line); border-radius:10px; margin-top:6px; font-family:inherit; }
-  .skChecks { display:grid; grid-template-columns:repeat(3, 1fr); gap:4px 8px; margin-top:6px; }
-  .skChecks label { display:flex; align-items:center; gap:5px; font-size:14px; color:var(--text); }
-  .skChecks input { width:18px; height:18px; margin:0; accent-color:var(--pri); flex:none; }
-  .skQ { display:flex; flex-direction:column; } .skQ .qi, .skQ .ni { width:100%; min-width:0; }   /* 수량 한 줄 · 비고 다음 줄 */
-  .skQ input::placeholder { color:#98a2b3; }
-  /* 체크리스트 모양 (점검자 최종 확인 · 팀장 확인) */
-  .skPaper { background:#fff; border:1px solid #c9ced8; border-radius:6px; padding:10px; color:#111; font-size:12px; }
-  .skPaper .pT { text-align:center; font-size:17px; font-weight:800; margin:2px 0 8px; }
-  .skPaper table { width:100%; border-collapse:collapse; table-layout:fixed; }
-  .skPaper th, .skPaper td { border:1px solid #888; padding:4px 3px; vertical-align:middle; text-align:center; word-break:keep-all; overflow-wrap:anywhere; }
-  .skPaper th { background:#f1f1f1; font-weight:700; }
-  .skPaper .pHead td { font-weight:700; } .skPaper .pSign { height:46px; } .skPaper .pSign img { max-width:100%; max-height:44px; display:block; margin:0 auto; }
-  .skPaper .pNote { font-size:11px; margin:6px 0 4px; }
-  .skPaper .pi { text-align:left; } .skPaper .pr { font-weight:800; font-size:14px; } .skPaper .pr.x { color:#c0392b; }
-  .skPaper .pn { font-size:11px; }
-  .skPaper tr.chg td { background:#fff3c4; }
-  .skPaper td.ck { background:#fff3c4; }   /* 팀장 보기: 수량 바뀜·비고·불량 칸 */
-  .skPaper .was { display:block; font-size:10.5px; color:#b45309; font-weight:700; margin-top:2px; }
-  .skPaper .pChg { font-size:12px; font-weight:700; color:#b45309; margin-bottom:6px; } .skPaper .pChg.none { color:var(--sub); }
-  /* 팀장 내용 보기: 전체 화면 (역마다 체크리스트, 이전·다음 역) */
-  .skView { position:fixed; top:var(--vvt, 0px); left:0; right:0; height:var(--vvh, 100%); z-index:40; background:#e9edf4; display:flex; flex-direction:column; }
-  body.skLock { overflow:hidden; }
-  .lvTop { flex:none; display:flex; align-items:center; gap:8px; padding:8px 10px; background:#fff; border-bottom:2px solid var(--pri); }
-  .lvTop b { flex:1; min-width:0; font-size:15px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .lvTop span { font-size:13px; font-weight:700; color:var(--pri); white-space:nowrap; }
-  .lvTop select { flex:none; max-width:44%; height:36px; font-size:15px; border:1px solid var(--line); border-radius:8px; padding:0 6px; background:#fff; color:var(--text); }
-  .lvPage { flex:1; overflow-y:auto; -webkit-overflow-scrolling:touch; overscroll-behavior:contain; padding:10px; }
-  .lvPage > .skPaper, .lvPage > .hint, .lvPage > .lvHint, .lvPage > .lvNav, .lvPage > .card { max-width:794px; margin-left:auto; margin-right:auto; }   /* A4 폭(794px)까지만, 가운데 */
-  .lvPage > .skPaper { aspect-ratio:210 / 297; box-sizing:border-box; }   /* A4 비율 (내용이 길면 아래로 늘어남) */
+  body.popLock { overflow:hidden; }
   /* 가운데 로딩 표시 (서버를 부르는 동안, 0.3초 넘으면) */
   .busyOver { position:fixed; inset:0; z-index:9999; display:flex; align-items:center; justify-content:center; background:rgba(15,23,42,.28); }
   .busyOver.hidden { display:none; }
@@ -492,8 +417,6 @@
   .busyBox b { font-size:15px; color:var(--text); }
   .busySpin { width:42px; height:42px; border:4px solid #dbe3f4; border-top-color:var(--pri); border-radius:50%; animation:busySp .8s linear infinite; }
   @keyframes busySp { to { transform:rotate(360deg); } }
-  .lvHint { text-align:center; font-size:13px; color:var(--sub); padding:8px 0; }
-  .lvNav { margin:6px 0 30px; }
   /* PDF 서명지 */
   .pdfTag { display:inline-block; font-size:12px; font-weight:800; color:#fff; background:#6d28d9; border-radius:6px; padding:1px 6px; margin-right:6px; vertical-align:2px; }
   .person.closed .pdfTag { background:#9aa3af; }

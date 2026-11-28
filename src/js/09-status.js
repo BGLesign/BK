@@ -67,25 +67,12 @@
     if ($('nTpl').value === PDF_TPL) { puOpen(); return; }   // PDF 서명지: PDF 올리는 화면
     if (!admData) { admEnsure(function () { nTplUi(); }, $('nMsg')); return; }
     var rfNew = isRfTpl($('nTpl').value), dept = rfNew || $('nDeptRow').classList.contains('hidden') ? [] : mselVal($('nDept'));   // 숨겨진 칸의 기본값은 보내지 않음
-    var skNew = isSkTpl($('nTpl').value);
     var need = [['nTitle', '교육명'], ['nDate', '날짜'], ['nCode', '접속 코드']].filter(function (f) {
-      if (skNew) return f[0] === 'nDate' && !$(f[0]).value.trim();   // 안전점검: 날짜만 (제목은 비우면 기본 제목)
       return !rfNew && !$(f[0]).value.trim();        // 비상: 제목·날짜·접속 코드 입력 없음
     });
     if (need.length) {                        // 빈 칸은 서버에 보내기 전에 바로 안내 (버튼은 잠그지 않음)
       msg($('nMsg'), '입력하지 않은 칸: ' + need.map(function (f) { return f[1]; }).join(', '), '#c0392b');
       $(need[0][0]).focus();
-      return;
-    }
-    if (skNew) {
-      var sts = [].filter.call($('nSkList').querySelectorAll('input'), function (x) { return x.checked; }).map(function (x) { return x.value; });
-      if (!sts.length) { msg($('nMsg'), '점검할 역을 하나 이상 고르세요.', '#c0392b'); return; }
-      $('nCreate').disabled = true;
-      admCall('adminCreateEdu', [{ tpl: $('nTpl').value, date: $('nDate').value, stations: sts }], function (d) {
-        $('nCreate').disabled = false;
-        $('newCard').classList.remove('open'); edTab = 'open'; renderAdmin(d);
-      }, $('nMsg'), function () { $('nCreate').disabled = false; });
-      setTimeout(function () { $('nCreate').disabled = false; }, 20000);
       return;
     }
     var qrMin = rfNew ? rfMinVal() : '';
@@ -164,7 +151,6 @@
       if (mode !== 'exp') q('.rosterSec').classList.remove('hidden'); q('.rosterLeft').textContent = (e.rosterLeft || []).join(', ') || '없음 (전원 서명)'; }
     if (e.codeLocked) { var lchip = document.createElement('span'); lchip.className = 'chip off'; lchip.textContent = '코드 잠김'; q('.t').appendChild(lchip); }
     if (e.missingTabs) { var tchip = document.createElement('span'); tchip.className = 'chip off'; tchip.textContent = '양식 없음'; q('.t').appendChild(tchip); }
-    if (e.safety) { var kchip = document.createElement('span'); kchip.className = 'chip ext'; kchip.textContent = '안전점검'; q('.t').appendChild(kchip); }
     if (e.refund) { var rchip = document.createElement('span'); rchip.className = 'chip rf'; rchip.textContent = '환불 등록'; q('.t').appendChild(rchip);
       var rcnt = document.createElement('span'); rcnt.style.cssText = 'margin-left:6px;font-size:14px;font-weight:700;vertical-align:1px'; rcnt.textContent = e.signers.length + '명'; q('.t').appendChild(rcnt); }
     var tInfo = [e.dept, e.team, e.host ? '주관 ' + e.host : '', e.date].filter(Boolean).join(' · ');      // 부서명·팀·날짜는 제목 줄의 표시 옆에 (내보내기 창만, 정보 수정 창은 아래 입력칸에 같은 값)
@@ -173,7 +159,6 @@
     q('.cnt').textContent = '서명 ' + e.signers.length + (e.roster ? '/' + e.roster : '') + '명';   // 접속 코드는 정보 수정 창의 입력칸에
     q('.d').classList.toggle('hidden', !!e.refund); q('.cnt').classList.toggle('hidden', !!e.refund);   // 환불 등록: 빨간 표시 옆 인원만
     if (mode !== 'exp' && !e.roster) q('.cnt').classList.add('hidden');   // 정보 수정 창: 서명 수는 [서명자 순서 (N명)] 버튼에 (명단 지정이면 N/M명은 남김)
-    if (e.safety) { q('.d').textContent = '역 ' + e.safety.n + '개'; q('.cnt').classList.remove('hidden'); q('.cnt').textContent = '점검자 서명 ' + e.safety.ins + '/' + e.safety.n + ' · 팀장 서명 ' + e.safety.lead + '/' + e.safety.n; }
     if (e.refund && e.open) {                        // 고객용 QR 접수 남은 시간 (줄어들며 표시, 끝나면 'QR 접수 마감 · 직원 등록 가능')
       var left = document.createElement('span'); left.className = 'rfLeft';
       left.setAttribute('data-end', String(Date.now() + (Number(e.autoCloseLeft) || 0))); left.title = (e.autoClose ? e.autoClose + ' QR 접수 마감 · ' : '') + 'QR 접수 ' + (e.qrMin || '') + '분';
@@ -217,8 +202,7 @@
     q('.b-role').onclick = function () { openRoles(e.id); };
     q('.roleBox').classList.toggle('hidden', mode === 'exp' || !e.hasRole || !!e.guest || !!e.refund);
     // 비상(환불 등록): 접속 코드·서명자 순서 없음
-    q('.codeSec').classList.toggle('hidden', !!e.refund || !!e.safety); q('.ordSec').classList.toggle('hidden', !!e.refund || !!e.safety);   // 안전점검: 접속 코드·순서 없음 (역 순서)
-    if (e.safety) { q('.roleBox').classList.add('hidden'); q('.i-title').parentElement.classList.add('hidden'); q('.i-deptRow').classList.add('hidden'); q('.i-teamRow').classList.add('hidden'); }
+    q('.codeSec').classList.toggle('hidden', !!e.refund); q('.ordSec').classList.toggle('hidden', !!e.refund);
     q('.b-pdf').classList.toggle('hidden', !!e.refund); q('.b-html').classList.toggle('hidden', !!e.refund);
     if (e.refund) q('.expTitle').textContent = '등록 명단 내보내기 (CSV)';
     if (e.refund) {
